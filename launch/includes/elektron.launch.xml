@@ -1,0 +1,26 @@
+<launch>
+  <arg name="laser"/>
+  <arg name="tower"/>
+  <arg name="tower_sensor"/>
+  <arg name="base"/> 
+  <arg name="use_sim"/> 
+ <arg name="use_diff_drive_controller" default="1"/>
+  <arg name="urdf_file" default="$(find xacro)/xacro '$(find stero_mobile_init)/config/.robots/$(arg base)_$(arg laser)_Tower-$(arg tower_sensor).urdf.xacro' use_sim:=$(arg use_sim) use_diff_drive_controller:=$(arg use_diff_drive_controller)" if="$(arg tower)"/>
+  <arg name="urdf_file" default="$(find xacro)/xacro '$(find stero_mobile_init)/config/.robots/$(arg base)_$(arg laser)_NoTower.urdf.xacro' use_sim:=$(arg use_sim) use_diff_drive_controller:=$(arg use_diff_drive_controller)" unless="$(arg tower)"/>
+  <param name="robot_description" command="$(arg urdf_file)" />
+  
+  <!-- Gazebo model spawner -->
+  <node name="spawn_elektron_model" pkg="gazebo_ros" type="spawn_model"
+        args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model $(arg base)"/>
+    <!-- elektron control spawner -->
+
+ <include file="$(find stero_mobile_init)/launch/$(arg base)_Tower_control.launch.xml" if="$(arg tower)">
+  <arg name="base" value="$(arg base)"/>
+  <arg name="use_diff_drive_controller" value="$(arg use_diff_drive_controller)"/>
+  </include>
+ <include file="$(find stero_mobile_init)/launch/$(arg base)_NoTower_control.launch.xml" unless="$(arg tower)">
+
+<arg name="base" value="$(arg base)"/>
+  </include>
+
+</launch>

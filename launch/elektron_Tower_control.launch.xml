@@ -1,0 +1,41 @@
+<!-- For proper laser scan visualization in gazebo:
+	export LIBGL_ALWAYS_SOFTWARE=1
+--> 
+
+
+<launch>
+<arg name="base"/> 
+<arg name="use_diff_drive_controller" default="1"/> 
+  <!-- load configuration -->
+  <rosparam command="load" file="$(find stero_mobile_init)/config/elektron_Tower_control.yaml" />
+
+  <node name="joint_state_controller" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/$(arg base)" args="joint_state_controller">
+  </node>
+
+<!-- spawn base controllers--> 
+<group unless="$(arg use_diff_drive_controller)">
+  <node name="base_controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/$(arg base)" args="mobile_base_controller elektron/mobile_base_controller/cmd_vel:=/cmd_vel /elektron/mobile_base_controller/odom:=/odom">
+    <remap from="/elektron/mobile_base_controller/cmd_vel" to="/cmd_vel_absolute"/>
+  </node>
+</group>
+
+<!-- spawn tower controllers -->
+
+  <node name="tower_controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/tower" args="head_pitch_position_controller head_yaw_position_controller"/>
+ <!-- avaliable wheel position controllers: head_pitch_position_controller, head_yaw_position_controller, left_wheel_position_controller right_wheel_position_controller. mobile_base_controller does not cooperate with position controllers -->
+ 
+<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="publish_frequency" type="double" value="30.0" />
+    <param name="use_tf_static" type="bool" value="false"/>
+<remap from="/joint_states" to="$(arg base)/joint_states"/>
+  </node>
+  <!--<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" output="screen">
+    <param name="publish_frequency" type="double" value="30.0" />
+
+    <param name="publish_default_efforts" type="Boolean" value="True" />
+ <remap from="/joint_states" to="$(arg base)/joint_states"/> 
+  </node> -->
+</launch>

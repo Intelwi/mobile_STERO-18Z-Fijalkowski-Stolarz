@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+
+<robot name="elektron" xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+	xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+	xmlns:xacro="http://ros.org/wiki/fixme"
+	xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface">
+	<property name="M_PI" value="3.14159"/>
+	<property name="use_diff_drive_controller" value="$(arg use_diff_drive_controller)" /> <!-- 0 = diff_drive_controller | 1 = pid -->
+
+	<property name="base_size_x" value="0.38" />
+	<property name="base_size_y" value="0.28" />
+	<property name="base_size_z" value="0.18" />
+	<property name="wheel_radius" value="0.050" />
+	<property name="wheel_length" value="0.02" />
+	<property name="caster_wheel_offset_y" value="0.1675" />
+	<!-- INCLUDE SICK LMX100 LASER -->
+	<xacro:include filename="$(find elektron_description)/urdf/sensors/sick_laser_lmx_100.urdf" />
+	<!-- INCLUDE KINECT -->
+	<xacro:include filename="$(find elektron_description)/urdf/sensors/kinect.urdf.xacro"/>
+	<!-- INCLUDE TOWER -->
+	<xacro:include filename="$(find elektron_description)/urdf/tower/tower.urdf.xacro"/>
+  	<!-- include calibrated params -->
+    <xacro:include filename="$(find elektron_description)/urdf/elektron_properties.urdf.xacro"/>
+  	
+	<!-- include gazebo control -->
+		<xacro:include filename="$(find elektron_control)/urdf/elektron_control.urdf.xacro"/>
+		<xacro:include filename="$(find elektron_control)/urdf/tower_control.urdf.xacro"/>
+ 			
+
+	<!-- ROBOT BASE DEFINITION -->
+	<link name="base_link">
+		<inertial>
+			<mass value="30" />
+			<origin xyz="-0.0 0 ${base_size_z/2}" />
+			<inertia ixx="100.0" ixy="10.0" ixz="100.0" iyy="100.0" iyz="100.0" izz="100.0" />
+		</inertial>
+
+		<visual>
+			<origin xyz="-0.0 0 0.115" rpy="0 0 0" />
+			<geometry>
+				<!--<box size="0.38 0.28 0.20" />-->
+				<mesh filename="package://elektron_description/meshes/base/elektron_body.dae"/>
+			</geometry>
+		</visual>
+
+		<collision>
+			<origin xyz="-0.0 0 0.115" rpy="0 0 0" />
+			<geometry>
+				<box size="0.30 0.28 0.20" />
+			</geometry>
+
+			<material name="Cyan">
+				<color rgba="0 255 255 1.0"/>
+			</material>
+
+		</collision>
+	</link>
+<!-- WHEELS MACRO -->
+	<xacro:macro name="erratic_wheel" params="suffix parent reflect offset m mimic mimic_wheel">
+		
+			<joint name="${parent}_${suffix}_wheel_joint" type="continuous">
+				<origin xyz="${offset} ${reflect*caster_wheel_offset_y} ${wheel_radius}" rpy="0	0 0"/>
+				<axis xyz="0 1 0" />
+				<anchor xyz="0 0 0" />
+				<limit effort="100" velocity="100" />
+				<joint_properties damping="0.0" friction="0.0" />
+				<parent link="${parent}" />
+				<child link="${parent}_${suffix}_wheel_link" />
+	 			<dynamics damping="0.0" friction="0.0"/>
+	 			<xacro:if value="${mimic}">
+		 			<mimic joint="${parent}_${mimic_wheel}_wheel_joint"/>					
+				</xacro:if>
+
+			</joint>
+
+			<link name="${parent}_${suffix}_wheel_link">
+				<inertial>
+					<mass value="0.1" />
+					<!-- check jmh 20081205 -->
+					<origin xyz=" 0 0 0 " />
+					<inertia ixx="0.012411765597" ixy="0.0" ixz="0.0" iyy="0.015218160428" iyz="0.0" izz="0.011763977943"/>
+				</inertial>
+				<visual>
+					<origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+					<geometry>
+						<cylinder radius="${wheel_radius}" length="${wheel_length}" />
+					</geometry>
+
+				</visual>
+				<collision>
+					<origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+					<geometry>
+						<cylinder radius="${wheel_radius}" length="${wheel_length}" />
+					</geometry>
+				</collision>
+			</link>
+			<!-- WHEELS FRICTION PARAMS -->
+			<gazebo reference="${parent}_${suffix}_wheel_link">
+			      <mu1 value="${m}" />
+			      <mu2 value="${m}" />
+			      <kp value="100000.0" />
+			      <kd value="0.00001" />
+			      <maxVel value="1.0" />
+			      <minDepth value="0.0001" />
+			</gazebo>    
+
+	</xacro:macro>
+
+	<!-- WHEELS DEFINITION -->
+	<xacro:erratic_wheel suffix="left" parent="base_link" reflect="1" offset="0" m="0.900" mimic="0" mimic_wheel="left"/>
+	<xacro:erratic_wheel suffix="left_front" parent="base_link" reflect="1" offset="0.15" m="0" mimic="1" mimic_wheel="left"/>
+	<xacro:erratic_wheel suffix="left_rear" parent="base_link" reflect="1" offset="-0.15" m="0" mimic="1" mimic_wheel="left"/>
+
+	<xacro:erratic_wheel suffix="right" parent="base_link" reflect="-1" offset="0" m="0.900" mimic="0" mimic_wheel="left"/>
+	<xacro:erratic_wheel suffix="right_front" parent="base_link" reflect="-1" offset="0.15"
+		m="0" mimic="1" mimic_wheel="right" />
+	<xacro:erratic_wheel suffix="right_rear" parent="base_link" reflect="-1" offset="-0.15"	m="0" mimic="1" mimic_wheel="right"/>
+
+<!-- ADD KINECT -->     
+    <joint name="bottom_kinect_joint" type="fixed">
+      <origin xyz="${kinect_px} ${kinect_py} ${kinect_pz}" rpy="${kinect_or} ${kinect_op} ${kinect_oy}"/>
+      <parent link="base_link"/>
+      <child link="bottom_kinect_link" />
+    </joint>
+    <link name="bottom_kinect_link"/>
+
+	<sensor_kinect parent="bottom_kinect_link" id="bottom"/>
+	<!-- ADD TOWER -->
+	<elektron_tower parent="base_link" camera_type="0" id="1"/> <!-- camera_type avaliable: 1 = kinect | 0 = rgb_camera -->
+	<tower_PID_control_gazebo/>
+
+	<!-- SET gazebo-ROS CONTROL-->
+	<xacro:unless value="${use_diff_drive_controller}">
+		<elektron_PID_control_gazebo/> 
+	</xacro:unless>
+	<xacro:if value="${use_diff_drive_controller}">
+		<gazebo>
+			<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+			<robotNamespace>/elektron</robotNamespace>
+			</plugin>
+
+			<plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+			<alwaysOn>true</alwaysOn>
+			<updateRate>100</updateRate>
+			<leftJoint>base_link_left_wheel_joint</leftJoint>
+			<rightJoint>base_link_right_wheel_joint</rightJoint>
+			<wheelSeparation>${caster_wheel_offset_y*2}</wheelSeparation>
+			<wheelDiameter>${wheel_radius*2}</wheelDiameter>
+			<torque>5</torque>
+			<commandTopic>/elektron/mobile_base_controller/cmd_vel</commandTopic>
+			<odometryTopic>/elektron/mobile_base_controller/odom</odometryTopic>
+			<odometryFrame>odom</odometryFrame>
+			<robotBaseFrame>base_link</robotBaseFrame>
+			<legacyMode>true</legacyMode>
+		</plugin>
+	</gazebo>
+	</xacro:if>
+<!-- ADD ground truth odometry -->
+<gazebo>
+<plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
+  <alwaysOn>true</alwaysOn>
+  <updateRate>50.0</updateRate>
+  <bodyName>base_link</bodyName>
+  <topicName>gazebo_odom</topicName>
+  <gaussianNoise>0.01</gaussianNoise>
+  <frameName>map</frameName>
+  <xyzOffsets>0 0 0</xyzOffsets>
+  <rpyOffsets>0 0 0</rpyOffsets>
+</plugin>
+</gazebo>
+</robot>
