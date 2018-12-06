@@ -1,8 +1,8 @@
 <package>
 <name>stero_mobile_init</name>
 <version>1.2.4</version>
-<description>uzupelnic</description>
-<maintainer email="DO UZUPELNIENIA"> DO UZUPELNIENIA!!!! </maintainer>
+<description>grzesiekmichal</description>
+<maintainer email="grzesiek@gmail.com"> grzesiekmichal </maintainer>
 <license>BSD</license>
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>elektron</run_depend>
