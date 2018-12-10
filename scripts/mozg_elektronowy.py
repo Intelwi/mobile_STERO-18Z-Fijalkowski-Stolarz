@@ -4,8 +4,8 @@ import math
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 
-OMEGA = 2*math.pi/5 # pelny obrot na 5s
-VELOC = 1 # do ustalenia doswiadczalnie
+OMEGA = 2*math.pi/6.28 # pelny obrot na 5s
+VELOC = 0.8 # do ustalenia doswiadczalnie
 
 class Position:
 	"""
@@ -51,6 +51,8 @@ def calcToPoint(destination):
 	dy = destination.y - cuRoPo.y
 	
 	if(dx == 0 and dy == 0):
+		setRoPo.tRot = 0
+		setRoPo.tGo = 0
 		return
 	
 	""" Bezwzgledny kat obrotu theta """
@@ -92,7 +94,7 @@ def listener():
 	"""
 	rospy.init_node('listener', anonymous=True)
 	rospy.Subscriber('chatter', Pose, callback) # TOPIC: chatter
-	#rospy.spin()
+	print "READY TO DO A JOB"
 
 
 def callback(data):
@@ -100,8 +102,8 @@ def callback(data):
 	Odbiera wiadomosci i wywoluje funkcje zarzadzajaca
 	
 	"""
-	rospy.loginfo(rospy.get_caller_id() + "I heard an order: %s", data.desc)
-	manager(data)
+	rospy.loginfo(rospy.get_caller_id() + "I heard an order: %s", data.position.z)
+	manager(data.position)
 
 
 def manager(data):
@@ -109,15 +111,16 @@ def manager(data):
 	Na podstawie stringa 'desc' otrzymanej wiadomosci decyduje jaka akcje wykonac
 	
 	"""
-	if(data.desc == "to_point"):
+	if(data.z == 0):
 		calcToPoint(data)
-		talkerToPoint()
-	elif(data.desc == "there_and_back"):
+		if(setRoPo.tRot != 0 or setRoPo.tGo != 0):
+			talkerToPoint()
+	'''elif(data.desc == "there_and_back"):
 		#TO DO
 	elif(data.desc == "rotating"):
 		#TO DO
 	elif(data.desc == "square"):
-		#TO DO
+		#TO DO'''
 
 
 ###-------------------------------------v--MESS-BUILDERS--v-------------------------------------###
@@ -146,6 +149,7 @@ def buildMess(go, rot, sign):
 	vel_msg.angular.x = 0
 	vel_msg.angular.y = 0
 	vel_msg.angular.z = OMEGA*rot*sign
+	print "predkosc obrotowa:", vel_msg.angular.z
 	return vel_msg
 
 
@@ -161,16 +165,29 @@ def talkerToPoint():
 
 	""" Obrot w strone punktu docelowego """
 	message = buildMess(False, True, setRoPo.sign)
-	rospy.loginfo(messageg)
+	rospy.loginfo(message)
 	pub.publish(message)
-	sleep(setRoPo.tRot)
+	rospy.sleep(2) # setRoPo.tRot
 	cuRoPo.theta = setRoPo.theta
+
+	""" Obrot w strone punktu docelowego """
+	message = buildMess(False, True, setRoPo.sign)
+	rospy.loginfo(message)
+	pub.publish(message)
+	rospy.sleep(2) # setRoPo.tRot
+	cuRoPo.theta = setRoPo.theta
+
+	""" Zatrzymanie robota w punkcie docelowym """
+	message = buildMess(False, False, 1)
+	rospy.loginfo(message)
+	pub.publish(message)
+	rospy.sleep(2)
 	
 	""" Jazda w strone punktu docelowego """
 	message = buildMess(True, False, 1) # jedziemy zawsze przodem
 	rospy.loginfo(message)
 	pub.publish(message)
-	sleep(setRoPo.tGo)
+	rospy.sleep(setRoPo.tGo)
 	
 	""" Zatrzymanie robota w punkcie docelowym """
 	message = buildMess(False, False, 1)
@@ -178,11 +195,13 @@ def talkerToPoint():
 	pub.publish(message)
 	cuRoPo.x = setRoPo.x
 	cuRoPo.y = setRoPo.y
+	rospy.sleep(10)
 
 
 ###------------------------------------------v--MAIN--v------------------------------------------###
 
 if __name__ == '__main__':
 	listener()
+	rospy.spin()
 	#while not rospy.is_shutdown():
 		
