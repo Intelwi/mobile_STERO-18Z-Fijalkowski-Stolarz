@@ -47,7 +47,7 @@ def talker():
 	vel_msg = sendMess()
 	rospy.loginfo(vel_msg)
 	pub.publish(vel_msg)
-	sleep()
+	rospy.sleep(10)
 	vel_msg = sendMess()
 	rospy.loginfo(vel_msg)
 	pub.publish(vel_msg)
