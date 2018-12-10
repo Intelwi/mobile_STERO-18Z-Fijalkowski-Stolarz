@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 
 OMEGA = 2*math.pi/6.28 # pelny obrot na 5s
 VELOC = 0.8 # do ustalenia doswiadczalnie
+HZ = 50
 
 class Position:
 	"""
@@ -162,20 +163,17 @@ def talkerToPoint():
 	
 	"""
 	pub = rospy.Publisher('/mux_vel_nav/cmd_vel', Twist, queue_size=10) # TOPIC: /mux_vel_nav/cmd_vel
+	rate = rospy.Rate(HZ) # 50hz
 
 	""" Obrot w strone punktu docelowego """
 	message = buildMess(False, True, setRoPo.sign)
 	rospy.loginfo(message)
-	pub.publish(message)
-	rospy.sleep(2) # setRoPo.tRot
-	cuRoPo.theta = setRoPo.theta
-
-	""" Obrot w strone punktu docelowego """
-	message = buildMess(False, True, setRoPo.sign)
-	rospy.loginfo(message)
-	pub.publish(message)
-	rospy.sleep(2) # setRoPo.tRot
-	cuRoPo.theta = setRoPo.theta
+	i = 0
+	while i <= HZ*setRoPo.tRot:
+		pub.publish(message)
+		cuRoPo.theta = setRoPo.theta
+		i=i+1
+		rate.sleep()
 
 	""" Zatrzymanie robota w punkcie docelowym """
 	message = buildMess(False, False, 1)
