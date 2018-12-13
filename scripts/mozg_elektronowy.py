@@ -7,8 +7,8 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from decimal import Decimal
 
-OMEGA = 2*math.pi/15 # pelny obrot na 15s
-VELOC = 0.3 # predkosc postepowa - zmniejszyc???
+OMEGA = 2*math.pi/20 # pelny obrot na 15s
+VELOC = 0.1 # predkosc postepowa - zmniejszyc???
 HZ = 50 # czestotliwsc wysylania wiadomosci
 working = False # True -> robot podczas pracy -> nie zadasz nowego punktu
 STATE = 1

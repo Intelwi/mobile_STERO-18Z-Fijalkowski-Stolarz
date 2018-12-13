@@ -9,8 +9,8 @@ def talker():
 	rate = rospy.Rate(1) # 1hz
 	while not rospy.is_shutdown():
 		pose = Pose()
-		pose.position.x = 0
-		pose.position.y = 0
+		pose.position.x = 1
+		pose.position.y = 1
 		pose.position.z = 1
 		rospy.loginfo(pose)
 		pub.publish(pose)

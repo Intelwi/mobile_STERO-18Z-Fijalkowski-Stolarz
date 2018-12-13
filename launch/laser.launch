@@ -1,0 +1,14 @@
+<!--
+Example launch file: launches the scan matcher with pre-recorded data
+-->
+
+<launch>
+  <node pkg="laser_scan_matcher" type="laser_scan_matcher_node"
+    name="laser_scan_matcher_node" output="screen">
+
+    <param name="use_imu" value="false"/>
+    <remap from="scan" to="laser_scan"/>
+    <remap from="odom" to="elektron/mobile_base_controller/odom"/>
+  </node>
+
+</launch>
