@@ -142,7 +142,7 @@ def calcAllSquarePoints():
 	Position() x3
 	
 	"""
-	print "squarePoint1.x:", setRoPo.x, "  squarePoint1.y:", setRoPo.y
+	print "Corner 1: (%s, %s)" %(setRoPo.x, setRoPo.y)
 	
 	""" Tworzenie macierzy jednorodnej robota w setRoPo """
 	vecRo = PyKDL.Vector(setRoPo.x, setRoPo.y, 0)
@@ -152,15 +152,15 @@ def calcAllSquarePoints():
 	vecDestRel = PyKDL.Vector(0, setRoPo.s, 0)
 	vecDest = mxJednoRo * vecDestRel
 	squarePoint2 = Position(vecDest[0], vecDest[1], 0)
-	print "squarePoint2.x:", squarePoint2.x, "  squarePoint2.y:", squarePoint2.y
+	print "Corner 2: (%s, %s)" %(round(squarePoint2.x, 3), round(squarePoint2.y, 3))
 	
 	vecDestRel = PyKDL.Vector(-setRoPo.s, setRoPo.s, 0)
 	vecDest = mxJednoRo * vecDestRel
 	squarePoint3 = Position(vecDest[0], vecDest[1], 0)
-	print "squarePoint3.x:", squarePoint3.x, "  squarePoint3.y:", squarePoint3.y
+	print "Corner 3: (%s, %s)" %(round(squarePoint3.x, 3), round(squarePoint3.y, 3))
 	
 	squarePoint4 = Position(cuRoPo.x, cuRoPo.y, 0)
-	print "squarePoint4.x:", squarePoint4.x, "  squarePoint4.y:", squarePoint4.y
+	print "Corner 4: (%s, %s)" %(round(squarePoint4.x, 3), round(squarePoint4.y, 3))
 	
 	return squarePoint2, squarePoint3, squarePoint4
 
@@ -286,6 +286,9 @@ def manager(data):
 			talkerToPointOdom()
 			
 			working = False
+			
+	else :
+		print "Non-existent mode request"
 
 
 ###-------------------------------------v--MESS-BUILDERS--v-------------------------------------###
