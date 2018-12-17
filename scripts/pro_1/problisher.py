@@ -19,9 +19,9 @@ def usage(argNum):
 		print "Not enough arguments given. Usage is like:"
 	else :
 		print "Too much arguments given. Usage is like:"
-	print "	rosrun stero_mobile_init publisher.py x y mode"
+	print "	rosrun stero_mobile_init problisher.py x y mode"
 	print "For avaliable modes type in:"
-	print "	rosrun stero_mobile_init publisher.py help"
+	print "	rosrun stero_mobile_init problisher.py help"
 
 
 def modeDesc(mode):
