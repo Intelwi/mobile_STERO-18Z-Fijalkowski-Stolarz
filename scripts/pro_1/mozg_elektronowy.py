@@ -178,7 +178,7 @@ def listener():
 	rospy.init_node('listener', anonymous=True)
 	rospy.Subscriber('/chatter', Pose, callback)
 	rospy.Subscriber('/elektron/mobile_base_controller/odom', Odometry, getOdomNav)
-	rospy.Subscriber('/pose2D', Pose2D, callback)
+	rospy.Subscriber('/pose2D', Pose2D, getLaserNav)
 	print "READY TO DO A JOB"
 
 
