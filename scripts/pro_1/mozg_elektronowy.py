@@ -8,10 +8,11 @@ from geometry_msgs.msg import Pose2D
 from nav_msgs.msg import Odometry
 from decimal import Decimal
 
-OMEGA = 2*math.pi/30 # pelny obrot na 20s
-VELOC = 0.1 # predkosc postepowa
+OMEGA = 2*math.pi/20 # pelny obrot na 30s
+VELOC = 0.5 # predkosc postepowa 0.1
 HZ = 50 # czestotliwsc wysylania wiadomosci
 STATE = 1 # okresla zadanie jakie wykonuje robot (!=0 -> aktualna pozycja z odometrii/lasera)
+erBreFa = VELOC*0.06 # early breaking factor
 working = False # True -> robot podczas pracy -> nie zadasz nowego punktu
 withLaser = False # True -> nawigacja z uzyciem lasera
 
@@ -38,8 +39,9 @@ class Position:
 		self.tGo = s/VELOC
 
 
-cuRoPo = Position(0,0,0) # current Robot Position (x,y,theta)
+cuRoPo = Position(0,0,0) # current Robot Position (x,y,theta) by odometry or laser 
 setRoPo = Position(0,0,0) # zadana Robot Position (x,y,theta)
+hopeRoPo = Position(0,0,0) # hoped Robot Position (x,y,theta) when no feedback 
 
 
 ###-----------------------------------------v--CALCS--v-----------------------------------------###
@@ -61,8 +63,12 @@ def calcToPoint(destination):
 	global working
 	working = True
 	
-	dx = destination.x - cuRoPo.x
-	dy = destination.y - cuRoPo.y
+	if STATE != 0 :
+		dx = destination.x - cuRoPo.x
+		dy = destination.y - cuRoPo.y
+	else :
+		dx = destination.x - hopeRoPo.x
+		dy = destination.y - hopeRoPo.y
 	
 	if(abs(dx) < 0.1 and abs(dy) < 0.1): # zmniejszyc maksymalnie!!!
 		print "ALREADY IN POINT"
@@ -89,7 +95,10 @@ def calcToPoint(destination):
 	print "Theta:", setRoPo.theta/(math.pi*2)*360, "stopni"
 	
 	""" Wzgledny kat obrotu fi -> czas i kierunek obrotu """
-	fi = setRoPo.theta - cuRoPo.theta # uwzglednienie aktualnego kata obrotu
+	if STATE != 0 :
+		fi = setRoPo.theta - cuRoPo.theta # uwzglednienie aktualnego kata obrotu
+	else :
+		fi = setRoPo.theta - hopeRoPo.theta
 	if(abs(fi) > math.pi): # zawsze obracaj sie tak jak masz blizej
 		fi = -(abs(fi)/fi)*(2*math.pi - abs(fi))
 	setRoPo.tRot = abs(fi)/OMEGA
@@ -176,11 +185,10 @@ def listener():
 def getOdomNav(data):
 	"""
 	Odbiera wiadomosci z odometrii - aktualnej pozycji robota
-	i wywoluje funkcje zarzadzajaca
 	
 	"""
 	#rospy.loginfo(rospy.get_caller_id() + "I got location: %s", data)
-	if STATE != 0 and not withLaser :
+	if not withLaser :
 		rot = PyKDL.Rotation.Quaternion(data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w)
 		[roll,pitch,yaw] = rot.GetRot()
 		cuRoPo.theta = round(yaw, 3)
@@ -191,11 +199,10 @@ def getOdomNav(data):
 def getLaserNav(data):
 	"""
 	Odbiera wiadomosci z lasera - aktualnej pozycji robota
-	i wywoluje funkcje zarzadzajaca
 	
 	"""
 	#rospy.loginfo(rospy.get_caller_id() + "I got location: %s", data)
-	if STATE != 0 and withLaser :
+	if withLaser :
 		cuRoPo.theta = round(data.theta, 3)
 		cuRoPo.x = round(data.x, 3)
 		cuRoPo.y = round(data.y, 3)
@@ -237,15 +244,14 @@ def manager(data):
 			
 	elif(data.z == 2):
 		STATE = 2
-		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
-		if(working):
-			print "ZACZYNAM TEST ~PRZOD TYL~ #ODOM"
-			#TO DO
-			talkerToPointOdom()
-			working = False
+		working = True
+		print "ZACZYNAM TEST ~PRZOD TYL~ #ODOM"
+		talkerToSlide()
+		working = False
 			
 	elif(data.z == 3):
 		STATE = 3
+		working = True
 		print "ZACZYNAM TEST ~OBROT~ #ODOM"
 		talkerToTwist()
 		working = False
@@ -321,7 +327,7 @@ def talkerToPoint():
 	nie uwzglednia odometrii
 	
 	"""
-	
+	print "talkerToPoint STARTED"
 	pub = rospy.Publisher('/mux_vel_nav/cmd_vel', Twist, queue_size=10) # TOPIC: /mux_vel_nav/cmd_vel
 	rate = rospy.Rate(HZ)
 	
@@ -331,6 +337,7 @@ def talkerToPoint():
 	i=0
 	while i <= HZ*setRoPo.tRot:
 		pub.publish(message)
+		print "dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
 		i=i+1
 		rate.sleep()
 	
@@ -343,7 +350,7 @@ def talkerToPoint():
 		i=i+1
 		rate.sleep()
 		
-	cuRoPo.theta = setRoPo.theta
+	hopeRoPo.theta = setRoPo.theta
 	
 	""" Jazda w strone punktu docelowego """
 	message = buildMess(True, False, 1) # jedziemy zawsze przodem
@@ -351,6 +358,9 @@ def talkerToPoint():
 	i=0
 	while i<=HZ*setRoPo.tGo:
 		pub.publish(message)
+		print "dest x: ", format(setRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
+		print "dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
+		print "--------"
 		i=i+1
 		rate.sleep()
 	
@@ -363,8 +373,14 @@ def talkerToPoint():
 		i=i+1
 		rate.sleep()
 	
-	cuRoPo.x = setRoPo.x
-	cuRoPo.y = setRoPo.y
+	hopeRoPo.x = setRoPo.x
+	hopeRoPo.y = setRoPo.y
+	
+	print "\ntalkerToPoint FINISHED with:"
+	print "	dest angle: ", format(hopeRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
+	print "	dest x: ", format(hopeRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
+	print "	dest y: ", format(hopeRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
+	print "\n"
 
 
 def talkerToPointOdom():
@@ -383,15 +399,21 @@ def talkerToPointOdom():
 	pub = rospy.Publisher('/mux_vel_nav/cmd_vel', Twist, queue_size=10) # TOPIC: /mux_vel_nav/cmd_vel
 	rate = rospy.Rate(HZ)
 	
-	''' Wyznaczenie warunku dla konca jazdy robota '''
+	""" Wyznaczenie warunku dla konca jazdy robota """
 	if abs(setRoPo.x - cuRoPo.x) > abs(setRoPo.y - cuRoPo.y) :
-		condition = lambda : abs(setRoPo.x - cuRoPo.x) >= 0.002
+		if cuRoPo.x < setRoPo.x :
+			condition = lambda ebf: cuRoPo.x + ebf < setRoPo.x
+		else :
+			condition = lambda ebf: cuRoPo.x - ebf > setRoPo.x
 	else :
-		condition = lambda : abs(setRoPo.y - cuRoPo.y) >= 0.002
+		if cuRoPo.y < setRoPo.y :
+			condition = lambda ebf: cuRoPo.y + ebf < setRoPo.y
+		else :
+			condition = lambda ebf: cuRoPo.y - ebf > setRoPo.y
 	
 	""" Obrot w strone punktu docelowego """
 	message = buildMess(False, True, setRoPo.sign)
-	while abs(setRoPo.theta - cuRoPo.theta) >= 0.007 :
+	while abs(setRoPo.theta - cuRoPo.theta) >= OMEGA*0.02 :
 		pub.publish(message)
 		print "dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
 		rate.sleep()
@@ -406,7 +428,7 @@ def talkerToPointOdom():
 	
 	""" Jazda w strone punktu docelowego """
 	message = buildMess(True, False, 1) # jedziemy zawsze przodem
-	while condition() : #sprawdzamy osiagniecie tylko jednaj ze wspolrzednych docelowych
+	while condition(erBreFa) : #sprawdzamy osiagniecie tylko jednej ze wspolrzednych docelowych
 		pub.publish(message)
 		print "dest x: ", format(setRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
 		print "dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
@@ -466,6 +488,63 @@ def talkerToTwist():
 		rate.sleep()
 		
 	print "\ntalkerToTwist FINISHED with:"
+	print "	dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
+	print "	dest x: ", format(setRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
+	print "	dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
+	print "\n"
+
+
+def talkerToSlide():
+	"""
+	Publikuje polecenia do robota,
+	majace na celu jego przejechanie w przod i w tyl
+	uwzglednia odometrie
+	
+	Parameters ?
+	----------
+	setRoPo : Position()
+		pozycja zadana dla robota
+	
+	"""
+	print "talkerToSlide STARTED"
+	pub = rospy.Publisher('/mux_vel_nav/cmd_vel', Twist, queue_size=10) # TOPIC: /mux_vel_nav/cmd_vel
+	rate = rospy.Rate(HZ)
+	
+	""" Jazda w strone punktu docelowego """
+	message = buildMess(True, False, 1) # jedziemy przodem
+	while cuRoPo.x < 2 : #sprawdzamy osiagniecie tylko jednej ze wspolrzednych docelowych
+		pub.publish(message)
+		print "dest x: ", format(setRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
+		print "dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
+		print "--------"
+		rate.sleep()
+	
+	""" Zatrzymanie robota """
+	message = buildMess(False, False, 0)
+	i=0
+	while i<=HZ :
+		pub.publish(message)
+		i=i+1
+		rate.sleep()
+	
+	""" Jazda spowrotem """
+	message = buildMess(True, False, -1) # jedziemy tylem
+	while cuRoPo.x > 0 : #sprawdzamy osiagniecie tylko jednej ze wspolrzednych docelowych
+		pub.publish(message)
+		print "dest x: ", format(setRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
+		print "dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
+		print "--------"
+		rate.sleep()
+	
+	""" Zatrzymanie robota """
+	message = buildMess(False, False, 0)
+	i=0
+	while i<=HZ :
+		pub.publish(message)
+		i=i+1
+		rate.sleep()
+		
+	print "\ntalkerToSlide FINISHED with:"
 	print "	dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
 	print "	dest x: ", format(setRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
 	print "	dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
