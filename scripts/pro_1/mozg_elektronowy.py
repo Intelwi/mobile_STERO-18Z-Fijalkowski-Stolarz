@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import rospy
 import math
 import PyKDL
@@ -8,13 +9,15 @@ from geometry_msgs.msg import Pose2D
 from nav_msgs.msg import Odometry
 from decimal import Decimal
 
-OMEGA = 2*math.pi/20 # pelny obrot na 30s
-VELOC = 0.5 # predkosc postepowa 0.1
+OMEGA = 2*math.pi/10 # pelny obrot na 30s
+VELOC = 0.7 # predkosc postepowa 0.1
 HZ = 50 # czestotliwsc wysylania wiadomosci
 STATE = 1 # okresla zadanie jakie wykonuje robot (!=0 -> aktualna pozycja z odometrii/lasera)
 erBreFa = VELOC*0.06 # early breaking factor
 working = False # True -> robot podczas pracy -> nie zadasz nowego punktu
 withLaser = False # True -> nawigacja z uzyciem lasera
+lefty = False # True -> kwadrat w lewo / obrot w lewo
+
 
 class Position:
 	"""
@@ -124,7 +127,7 @@ def calcNextSquarePoint():
 	vecRo = PyKDL.Vector(cuRoPo.x, cuRoPo.y, 0)
 	twiRo = PyKDL.Rotation.RPY(0, 0, cuRoPo.theta)
 	mxJednoRo = PyKDL.Frame(twiRo, vecRo)
-	vecDestRel = PyKDL.Vector(0, setRoPo.s, 0)
+	vecDestRel = PyKDL.Vector(0, (lefty*2-1)*setRoPo.s, 0) # kwadrat w lewo gdy lewo==True
 	vecDest = mxJednoRo * vecDestRel
 	nextSqPnt = Position(vecDest[0], vecDest[1], 0)
 	print "nextSqPnt.x:", nextSqPnt.x, "  nextSqPnt.y:", nextSqPnt.y
@@ -149,12 +152,12 @@ def calcAllSquarePoints():
 	twiRo = PyKDL.Rotation.RPY(0, 0, setRoPo.theta)
 	mxJednoRo = PyKDL.Frame(twiRo, vecRo)
 	
-	vecDestRel = PyKDL.Vector(0, setRoPo.s, 0)
+	vecDestRel = PyKDL.Vector(0, (lefty*2-1)*setRoPo.s, 0) # kwadrat w lewo gdy lewo==True
 	vecDest = mxJednoRo * vecDestRel
 	squarePoint2 = Position(vecDest[0], vecDest[1], 0)
 	print "Corner 2: (%s, %s)" %(round(squarePoint2.x, 3), round(squarePoint2.y, 3))
 	
-	vecDestRel = PyKDL.Vector(-setRoPo.s, setRoPo.s, 0)
+	vecDestRel = PyKDL.Vector(-setRoPo.s, (lefty*2-1)*setRoPo.s, 0) # kwadrat w lewo gdy lewo==True
 	vecDest = mxJednoRo * vecDestRel
 	squarePoint3 = Position(vecDest[0], vecDest[1], 0)
 	print "Corner 3: (%s, %s)" %(round(squarePoint3.x, 3), round(squarePoint3.y, 3))
@@ -250,6 +253,7 @@ def manager(data):
 		working = False
 			
 	elif(data.z == 3):
+		if(STATE == 3): return # nie rob obrotu drugi raz z rzedu
 		STATE = 3
 		working = True
 		print "ZACZYNAM TEST ~OBROT~ #ODOM"
@@ -257,6 +261,7 @@ def manager(data):
 		working = False
 		
 	elif(data.z == 4):
+		if(STATE == 4): return # nie rob kwadratu drugi raz z rzedu
 		STATE = 4
 		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
 		if(working):
@@ -269,6 +274,7 @@ def manager(data):
 			working = False
 			
 	elif(data.z == 5):
+		if(STATE == 5): return # nie rob kwadratu drugi raz z rzedu
 		STATE = 5
 		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
 		if(working):
@@ -340,7 +346,8 @@ def talkerToPoint():
 	i=0
 	while i <= HZ*setRoPo.tRot:
 		pub.publish(message)
-		print "dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
+		print "\rdest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f'),
+		sys.stdout.flush()
 		i=i+1
 		rate.sleep()
 	
@@ -418,7 +425,8 @@ def talkerToPointOdom():
 	message = buildMess(False, True, setRoPo.sign)
 	while abs(setRoPo.theta - cuRoPo.theta) >= OMEGA*0.02 :
 		pub.publish(message)
-		print "dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
+		print "\rdest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f'),
+		sys.stdout.flush()
 		rate.sleep()
 	
 	""" Zatrzymanie robota """
@@ -470,16 +478,18 @@ def talkerToTwist():
 	rate = rospy.Rate(HZ)
 	
 	""" Obrot odjezdzajacy od 0 """
-	message = buildMess(False, True, 1) # obrot w lewo
+	message = buildMess(False, True, lefty*2-1) # obrot w lewo gdy lewo==True
 	while cuRoPo.theta < 1 :
 		pub.publish(message)
-		print "dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
+		print "\rdest angle: %s  current angle: %s" %(format(setRoPo.theta,'.3f'), format(cuRoPo.theta,'.3f')),
+		sys.stdout.flush()
 		rate.sleep()
 	
 	""" Obrot dojezdzajacy do 0 """
-	while abs(cuRoPo.theta) >= 0.007 :
+	while abs(cuRoPo.theta) >= OMEGA*0.02 :
 		pub.publish(message)
-		print "dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
+		print "\rdest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f'),
+		sys.stdout.flush()
 		rate.sleep()
 	
 	""" Zatrzymanie robota """
