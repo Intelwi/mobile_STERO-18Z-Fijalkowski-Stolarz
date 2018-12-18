@@ -36,7 +36,7 @@ title(['Trasa kwadrat']);
 xlabel('x');
 ylabel('y');
         
-%błąd ruchu naprzód i spoerotem
+%błąd ruchu naprzód i spwerotem
 bag = rosbag('proj3_diff_drive_slide_error.bag');
 
 %błąd
@@ -75,7 +75,7 @@ xlabel('x');
 ylabel('y');
 
 
-%błąd ruchu naprzód i spoerotem
+%błąd ruchu naprzód i spowrotem
 bag = rosbag('proj3_diff_drive_turn_error.bag');
 
 %błąd

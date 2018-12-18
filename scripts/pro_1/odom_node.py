@@ -27,32 +27,32 @@ def listener():
 	
 	"""
 	rospy.init_node('odom_node', anonymous=True)
-	rospy.Subscriber('/elektron/mobile_base_controller/odom', Odometry, getGazeboNav)
+	rospy.Subscriber('/elektron/mobile_base_controller/odom', Odometry, getOdomNav)
 	#rospy.Subscriber('/pose2D', Pose2D, getLaserNav)
-	rospy.Subscriber('/gazebo_odom', Odometry, getOdomNav)
+	rospy.Subscriber('/gazebo_odom', Odometry, getGazeboNav)
 	
 
 	print "READY TO DO A JOB"
 
 
-def getOdomNav(data):
+def getGazeboNav(data):
 	"""
 	Odbiera wiadomosci z odometrii - aktualnej pozycji robota
 	
 	"""
-	global real_x
-	global real_y
-	global real_theta
+	global fake_x
+	global fake_y
+	global fake_theta
 	
-	fake_x = data.pose.pose.position.x
-	fake_y = data.pose.pose.position.y
+	real_x = data.pose.pose.position.x
+	real_y = data.pose.pose.position.y
 
 	error_x = abs(fake_x - real_x)
 	error_y = abs(fake_y - real_y)
 
 	rot = PyKDL.Rotation.Quaternion(data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w)
 	[roll,pitch,yaw] = rot.GetRot()
-	fake_theta = yaw
+	real_theta = yaw
 
 	error_theta = abs(fake_theta - real_theta)
 	pub = rospy.Publisher('/error', Pose2D, queue_size=10) # TOPIC: /mux_vel_nav/cmd_vel
@@ -66,21 +66,21 @@ def getOdomNav(data):
 	pub.publish(error_msg)	
 	
 
-def getGazeboNav(data):
+def getOdomNav(data):
 	"""
 	Odbiera wiadomosci z lasera - aktualnej pozycji robota
 	
 	"""
-	global real_x
-	global real_y
-	global real_theta
+	global fake_x
+	global fake_y
+	global fake_theta
 	#rospy.loginfo(rospy.get_caller_id() + "I got location: %s", data)
-	real_x = data.pose.pose.position.x
-	real_y = data.pose.pose.position.y
+	fake_x = data.pose.pose.position.x
+	fake_y = data.pose.pose.position.y
 	
 	rot = PyKDL.Rotation.Quaternion(data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w)
 	[roll,pitch,yaw] = rot.GetRot()
-	real_theta = yaw;
+	fake_theta = yaw;
 
 ###------------------------------------------v--MAIN--v------------------------------------------###
 
