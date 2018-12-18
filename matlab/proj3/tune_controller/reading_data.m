@@ -1,7 +1,7 @@
 %błąd kwadratu
 %
 
-bag = rosbag('proj3_diff_drive_square_error.bag');
+bag = rosbag('proj3_tune_drive_square_error.bag');
 
 %gazebo_odom
 bSel1 = select(bag,"Topic",'/error');
@@ -15,7 +15,7 @@ error = (x_error.^2 + y_error.^2).^(0.5)
 figure(1)
 plot(error)
 xlim([0 length(error)]);
-title(['Błąd kwadratu diffdrive'])
+title(['Błąd kwadratu tune'])
         
 figure(2)   
 hold on;
