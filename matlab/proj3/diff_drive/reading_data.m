@@ -16,6 +16,7 @@ xlim([0 length(error)]);
 xlabel('time');
 ylabel('path error');
 title(['Błąd kwadratu diffdrive'])
+print ('square_path_error', '-dpng', '-r400')
         
 figure(2)   
 hold on;
@@ -23,7 +24,7 @@ title(['Błąd kwadratu diffdrive'])
 plot(theta_error);
 xlabel('time');
 ylabel('theta error');
-
+print ('square_theta_error', '-dpng', '-r400')
 
 %ścieżka
 bSel2 = select(bag,"Topic",'/gazebo_odom');
@@ -35,7 +36,8 @@ plot(x,y)
 title(['Trasa kwadrat']);
 xlabel('x');
 ylabel('y');
-        
+print ('square_path', '-dpng', '-r400')
+
 %błąd ruchu naprzód i spwerotem
 bag = rosbag('proj3_diff_drive_slide_error.bag');
 
@@ -54,13 +56,15 @@ xlim([0 length(error)]);
 xlabel('time');
 ylabel('path error');
 title(['Błąd slide diffdrive'])
-        
+print ('slide_path_error', '-dpng', '-r400')
+     
 figure(5)   
 hold on;
 title(['Błąd slide diffdrive'])
 plot(theta_error);
 xlabel('time');
 ylabel('theta error');
+print ('slide_theta_error', '-dpng', '-r400')
 
 
 %ścieżka
@@ -73,7 +77,7 @@ plot(x,y)
 title(['Trasa slide']);
 xlabel('x');
 ylabel('y');
-
+print ('slide_path', '-dpng', '-r400')
 
 %błąd ruchu naprzód i spowrotem
 bag = rosbag('proj3_diff_drive_turn_error.bag');
@@ -93,13 +97,16 @@ xlim([0 length(error)]);
 xlabel('time');
 ylabel('path error');
 title(['Błąd obrotu diffdrive'])
-        
+print ('rotate_path_error', '-dpng', '-r400')
+  
+
 figure(8)   
 hold on;
 title(['Błąd obrotu diffdrive'])
 plot(theta_error);
 xlabel('time');
 ylabel('theta error');
+print ('rotate_theta_error', '-dpng', '-r400')
 
 
 %ścieżka
@@ -112,6 +119,8 @@ plot(x,y)
 title(['Trasa obrotu']);
 xlabel('x');
 ylabel('y');
+print ('rotate_path', '-dpng', '-r400')
+
 %print ('tests', '-dpng', '-r400')
 %
 
