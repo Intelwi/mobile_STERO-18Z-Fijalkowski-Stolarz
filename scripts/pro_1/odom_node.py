@@ -27,9 +27,9 @@ def listener():
 	
 	"""
 	rospy.init_node('odom_node', anonymous=True)
-	rospy.Subscriber('/elektron/mobile_base_controller/odom', Odometry, getOdomNav)
+	rospy.Subscriber('/elektron/mobile_base_controller/odom', Odometry, getGazeboNav)
 	#rospy.Subscriber('/pose2D', Pose2D, getLaserNav)
-	rospy.Subscriber('/gazebo_odom', Odometry, getGazeboNav)
+	rospy.Subscriber('/gazebo_odom', Odometry, getOdomNav)
 	
 
 	print "READY TO DO A JOB"
