@@ -40,6 +40,9 @@ def getOdomNav(data):
 	Odbiera wiadomosci z odometrii - aktualnej pozycji robota
 	
 	"""
+	global real_x
+	global real_y
+	global real_theta
 	
 	fake_x = data.pose.pose.position.x
 	fake_y = data.pose.pose.position.y
@@ -57,6 +60,8 @@ def getOdomNav(data):
 	error_msg.x = error_x
 	error_msg.y = error_y
 	error_msg.theta = error_theta
+
+	print "error_x: ", error_x,"	error_y: ",error_y, "	error_theta: ",error_theta
 	
 	pub.publish(error_msg)	
 	
@@ -66,6 +71,9 @@ def getGazeboNav(data):
 	Odbiera wiadomosci z lasera - aktualnej pozycji robota
 	
 	"""
+	global real_x
+	global real_y
+	global real_theta
 	#rospy.loginfo(rospy.get_caller_id() + "I got location: %s", data)
 	real_x = data.pose.pose.position.x
 	real_y = data.pose.pose.position.y
