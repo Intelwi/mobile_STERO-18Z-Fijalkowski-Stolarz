@@ -12,7 +12,9 @@ Example launch file: launches the scan matcher with pre-recorded data
     <remap from="odom" to="elektron/mobile_base_controller/odom"/>
   </node>
 
-   <node pkg="stero_mobile_init" type="odom_node.py"
-    name="odom_node" output="screen"/>
+   <!--<node pkg="stero_mobile_init" type="odom_node.py"
+    name="odom_node" output="screen"/>-->  <!--do wyliczania bledu tylko z odometrii-->
+   <node pkg="stero_mobile_init" type="laser_node.py"
+    name="laser_node" output="screen"/>  <!--do wyliczania bledu z odometrii i z czujnika laserowego-->
 
 </launch>
