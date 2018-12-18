@@ -46,7 +46,7 @@ x_error = cellfun(@(m) double(m.X),msgStructs1);
 y_error = cellfun(@(m) double(m.Y),msgStructs1);
 theta_error = cellfun(@(m) double(m.Theta),msgStructs1);
 
-error = (x_error.^2 + y_error.^2).^(0.5)
+error = (x_error.^2 + y_error.^2).^(0.5);
 
 figure(4)
 plot(error)
