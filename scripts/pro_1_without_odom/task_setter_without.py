@@ -244,10 +244,16 @@ def manager(data):
 			pose.position.y = msg1.y
 			calcToPoint(pose.position)
 			talkerToPoint()
+			cuRoPo.x = hopeRoPo.x
+			cuRoPo.y = hopeRoPo.y
+			cuRoPo.theta = hopeRoPo.theta
 			pose.position.x = msg2.x
 			pose.position.y = msg2.y
 			calcToPoint(pose.position)
 			talkerToPoint()
+			cuRoPo.x = hopeRoPo.x
+			cuRoPo.y = hopeRoPo.y
+			cuRoPo.theta = hopeRoPo.theta
 			pose.position.x = msg3.x
 			pose.position.y = msg3.y
 			calcToPoint(pose.position)
@@ -452,7 +458,7 @@ def talkerToTurn():
 	rate = rospy.Rate(HZ)
 	
 	""" Obrot o 360 """
-	message = buildMess(False, True, 1)
+	message = buildMess(False, True, -1)
 	i=0
 	while i <= HZ*(6.28/OMEGA):
 		pub.publish(message)
