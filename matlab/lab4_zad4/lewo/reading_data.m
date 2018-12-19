@@ -12,9 +12,10 @@ plot(xPoints,yPoints)
 xlabel('x');
 ylabel('y');
 xlim([-0.1 1.1]);
-ylim([-0.1 1.4]);
-title(['Wykresy testów']);
+ylim([-0.1 1.1]);
+title(['Wykres porównawczy']);
 hold off;
+print ('compare_fig', '-dpng', '-r400')
 
 %/elektron/mobile_base_controller/odom
 bSel = select(bag,"Topic",'/elektron/mobile_base_controller/odom');
@@ -22,7 +23,7 @@ msgStructs = readMessages(bSel);
 xPoints = cellfun(@(m) double(m.Pose.Pose.Position.X),msgStructs);
 yPoints = cellfun(@(m) double(m.Pose.Pose.Position.Y),msgStructs);
 
-%figure(2)
+figure(2)
 hold on;
 plot(xPoints,yPoints)
 hold off;
@@ -36,17 +37,11 @@ yPoints = cellfun(@(m) double(m.Y),msgStructs);
 %figure(3)
 hold on;
 plot(xPoints,yPoints)
-legend('/gazeboOdom','/elektron/odom','/pose2D')
+xlabel('x');
+ylabel('y');
+xlim([-0.1 1.1]);
+ylim([-0.1 1.3]);
+title(['Wykresy testów']);
+legend('/elektron/odom','/pose2D')
 hold off;
 print ('tests', '-dpng', '-r400')
-
-%wykres porownanwczy
-figure(2)
-X=[0 1 1 0 0]
-Y=[0 0 1 1 0]
-plot(X,Y)
-xlim([-0.1 1.1]);
-ylim([-0.1 1.4]);
-title(['Wykres porównawczy']);
-
-print ('compare_fig', '-dpng', '-r400')
