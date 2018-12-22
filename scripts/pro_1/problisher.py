@@ -43,6 +43,8 @@ def modeDesc(mode):
 		return "go square, first corner in position (%s, %s)" %(x,y)
 	elif mode == 5 :
 		return "go square, first corner in position (%s, %s) -> pre-counting" %(x,y)
+	else :
+		return "DESCRIPTION NOT AVALIABLE YET"
 
 
 def talker():
@@ -75,7 +77,7 @@ if __name__ == '__main__':
 		usage(argNum)
 		sys.exit(1)
 		
-	if mode not in range(6) :
+	if mode not in range(9) :
 		overRange = True
 		print "Non-existent mode request"
 		usage(argNum)
