@@ -5,7 +5,8 @@ Example launch file: launches the scan matcher with pre-recorded data
 <launch>
 	<node name="static_tf0" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 10"/>
 	<node name="map_server" pkg="map_server" type="map_server" args="$(find stero_mobile_init)/maps/map_of_home/map_of_home.yaml"/>
-	<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="/costmap_node/costmap" />
+	<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="/costmap_node" />
 		
+	<node name="costmap_node" pkg="stero_mobile_init" type="costmap_node"/>
 
 </launch>

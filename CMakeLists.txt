@@ -6,6 +6,9 @@ find_package(catkin REQUIRED COMPONENTS
 	rospy
 	std_msgs
 	message_generation
+	roscpp
+	tf
+	costmap_2d
 )
 
 add_message_files(
@@ -30,6 +33,16 @@ catkin_package(
 	CATKIN_DEPENDS message_runtime
 	DEPENDS elektron
 )
+
+include_directories(include
+                    ${catkin_INCLUDE_DIRS})
+
+
+set(COSTMAP_NODE_SOURCES
+    src/proj2/costmap_node.cpp
+  )
+add_executable(costmap_node ${COSTMAP_NODE_SOURCES})
+target_link_libraries(costmap_node ${catkin_LIBRARIES})
 
 install (DIRECTORY worlds/ DESTINATION share/${CMAKE_PROJECT_NAME}/worlds 
          FILES_MATCHING PATTERN "*.world")
