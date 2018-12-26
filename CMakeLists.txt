@@ -39,10 +39,16 @@ include_directories(include
 
 
 set(COSTMAP_NODE_SOURCES
-    src/proj2/costmap_node.cpp
+    src/proj2/costmap.cpp
   )
-add_executable(costmap_node ${COSTMAP_NODE_SOURCES})
-target_link_libraries(costmap_node ${catkin_LIBRARIES})
+
+add_executable(costmap ${COSTMAP_NODE_SOURCES})
+
+target_link_libraries(costmap ${catkin_LIBRARIES})
+
+add_executable(footprint src/proj2/footprint.cpp)
+
+target_link_libraries(footprint ${catkin_LIBRARIES})
 
 install (DIRECTORY worlds/ DESTINATION share/${CMAKE_PROJECT_NAME}/worlds 
          FILES_MATCHING PATTERN "*.world")

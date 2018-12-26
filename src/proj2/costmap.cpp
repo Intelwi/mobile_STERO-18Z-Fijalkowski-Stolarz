@@ -21,6 +21,7 @@ int main(int argc, char** argv){
 	buffer.setUsingDedicatedThread(true);//bo tf jest publikowany przez inny watek
 	std::cout<<"IT WORKS 2!"<<std::endl;
 	costmap_2d::Costmap2DROS costmap("costmap", buffer);
+	costmap.start();
 	//costmap_2d::Costmap2DPublisher publisher(&n,costmap.getCostmap(),"map","/costmap",true);
 	//publisher.publishCostmap();
     return 0;

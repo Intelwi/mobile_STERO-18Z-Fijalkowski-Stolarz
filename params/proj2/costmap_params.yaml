@@ -12,9 +12,10 @@ global_frame: /map
 robot_base_frame: /odom
 publish_frequency: 2
 update_frequency: 1
+transform_tolerance: 2
 static_map: true
 always_send_full_costmap: true
 
 
 
-footprint: [[-0.325, -0.325], [-0.325, 0.325], [0.325, 0.325], [0.46, 0.0], [0.325, -0.325]]
+#footprint: [[-0.325, -0.325], [-0.325, 0.325], [0.325, 0.325], [0.46, 0.0], [0.325, -0.325]]
