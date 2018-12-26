@@ -15,15 +15,15 @@ plot(error)
 xlim([0 length(error)]);
 xlabel('time');
 ylabel('path error');
-title(['Błąd kwadratu laserpath'])
+title(['LaserScanMatcher test kwadratu'])
 print ('square_path_error', '-dpng', '-r400')
         
 figure(2)   
 hold on;
-title(['Błąd kwadratu laserpath'])
+title(['LaserScanMatcher test kwadratu'])
 plot(theta_error);
 xlabel('time');
-ylabel('theta error');
+ylabel('angle error');
 print ('square_theta_error', '-dpng', '-r400')
 
 %ścieżka
@@ -33,7 +33,7 @@ x = cellfun(@(m) double(m.Pose.Pose.Position.X),msgStructs2);
 y = cellfun(@(m) double(m.Pose.Pose.Position.Y),msgStructs2);
 figure(3)
 plot(x,y)
-title(['Trasa kwadrat laserpath']);
+title(['LaserScanMatcher test kwadratu']);
 xlabel('x');
 ylabel('y');
 print ('square_path', '-dpng', '-r400')
@@ -56,15 +56,15 @@ plot(error)
 xlim([0 length(error)]);
 xlabel('time');
 ylabel('path error');
-title(['Błąd slide laserpath'])
+title(['LaserScanMatcher ruch w przód i w tył'])
 print ('slide_path_error', '-dpng', '-r400')
      
 figure(5)   
 hold on;
-title(['Błąd slide laserpath'])
+title(['LaserScanMatcher ruch w przód i w tył'])
 plot(theta_error);
 xlabel('time');
-ylabel('theta error');
+ylabel('angle error');
 print ('slide_theta_error', '-dpng', '-r400')
 
 
@@ -75,7 +75,7 @@ x = cellfun(@(m) double(m.Pose.Pose.Position.X),msgStructs2);
 y = cellfun(@(m) double(m.Pose.Pose.Position.Y),msgStructs2);
 figure(6)
 plot(x,y)
-title(['Trasa slide laserpath']);
+title(['LaserScanMatcher ruch w przód i w tył']);
 xlabel('x');
 ylabel('y');
 print ('slide_path', '-dpng', '-r400')
@@ -97,16 +97,16 @@ plot(error)
 xlim([0 length(error)]);
 xlabel('time');
 ylabel('path error');
-title(['Błąd obrotu diffdrive'])
+title(['LaserScanMatcher obrót'])
 print ('rotate_path_error', '-dpng', '-r400')
   
 
 figure(8)   
 hold on;
-title(['Błąd obrotu laserpath'])
+title(['LaserScanMatcher obrót'])
 plot(theta_error);
 xlabel('time');
-ylabel('theta error');
+ylabel('angle error');
 print ('rotate_theta_error', '-dpng', '-r400')
 
 
@@ -117,7 +117,7 @@ x = cellfun(@(m) double(m.Pose.Pose.Position.X),msgStructs2);
 y = cellfun(@(m) double(m.Pose.Pose.Position.Y),msgStructs2);
 figure(9)
 plot(x,y)
-title(['Trasa obrotu laserpath']);
+title(['LaserScanMatcher obrót']);
 xlabel('x');
 ylabel('y');
 print ('rotate_path', '-dpng', '-r400')
