@@ -1,0 +1,9 @@
+<!--
+Example launch file: launches the scan matcher with pre-recorded data
+-->
+
+<launch>
+	<include file="$(find stero_mobile_init)/launch/elektron_world.launch" />
+	<node name="static_tf0" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 100"/>
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find stero_mobile_init)/maps/map_of_home/map_of_home.yaml"/>
+</launch>

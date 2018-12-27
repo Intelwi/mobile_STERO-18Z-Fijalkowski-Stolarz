@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	tf
 	costmap_2d
+	move_base
 )
 
 add_message_files(
@@ -36,6 +37,7 @@ catkin_package(
 
 include_directories(include
                     ${catkin_INCLUDE_DIRS})
+
 
 
 set(COSTMAP_NODE_SOURCES

@@ -3,6 +3,7 @@ import sys
 import rospy
 import math
 import PyKDL
+from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Pose2D
@@ -17,7 +18,6 @@ HZ = 50 # czestotliwsc wysylania wiadomosci
 STATE = 1 # okresla zadanie jakie wykonuje robot (!=0 -> aktualna pozycja z odometrii/lasera)
 erBreFa = VELOC*0.06 # early breaking factor
 working = False # True -> robot podczas pracy -> nie zadasz nowego punktu
-withLaser = False # True -> nawigacja z uzyciem lasera
 lefty = False # True -> kwadrat w lewo / obrot w lewo
 
 
@@ -129,14 +129,14 @@ def pathPointsGetter():
 		pose1.pose.position.y = 0
 		pose1.pose.position.z = 0
 
-		pose2 = PoseStoped()
+		pose2 = PoseStamped()
 		pose2.header.stamp = rospy.Time(0)
 		pose2.header.frame_id = "map"
-		pose2.pose.position.x = 1
-		pose2.pose.position.y = 1
+		pose2.pose.position.x = 4
+		pose2.pose.position.y = 0
 		pose2.pose.position.z = 0
 		
-		resp1 = path_getter(pose1, pose2)
+		resp1 = path_getter(pose1, pose2,0.2)
 		print resp1
 	except rospy.ServiceException, e:
 		print "Service call failed: %s"%e
@@ -153,7 +153,6 @@ def listener():
 	rospy.init_node('listener', anonymous=True)
 	rospy.Subscriber('/chatter', Pose, callback)
 	rospy.Subscriber('/elektron/mobile_base_controller/odom', Odometry, getOdomNav)
-	rospy.Subscriber('/pose2D', Pose2D, getLaserNav)
 	print "READY TO DO A JOB"
 	pathPointsGetter()
 
@@ -164,27 +163,14 @@ def getOdomNav(data):
 	
 	"""
 	#rospy.loginfo(rospy.get_caller_id() + "I got location: %s", data)
-	if not withLaser :
-		rot = PyKDL.Rotation.Quaternion(data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w)
-		[roll,pitch,yaw] = rot.GetRot()
-		cuRoPo.theta = round(yaw, 3)
-		cuRoPo.x = round(data.pose.pose.position.x, 3)
-		cuRoPo.y = round(data.pose.pose.position.y, 3)
-		#print "theta:", yaw
-		#print "x:", data.pose.pose.position.x
-		#print "y:", data.pose.pose.position.y
-
-
-def getLaserNav(data):
-	"""
-	Odbiera wiadomosci z lasera - aktualnej pozycji robota
-	
-	"""
-	#rospy.loginfo(rospy.get_caller_id() + "I got location: %s", data)
-	if withLaser :
-		cuRoPo.theta = round(data.theta, 3)
-		cuRoPo.x = round(data.x, 3)
-		cuRoPo.y = round(data.y, 3)
+	rot = PyKDL.Rotation.Quaternion(data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w)
+	[roll,pitch,yaw] = rot.GetRot()
+	cuRoPo.theta = round(yaw, 3)
+	cuRoPo.x = round(data.pose.pose.position.x, 3)
+	cuRoPo.y = round(data.pose.pose.position.y, 3)
+	#print "theta:", yaw
+	#print "x:", data.pose.pose.position.x
+	#print "y:", data.pose.pose.position.y
 
 
 def callback(data):

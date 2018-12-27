@@ -4,10 +4,12 @@
 #include "geometry_msgs/PoseStamped.h"
 #include <iostream>
 #include <cmath>
-#include "tf/transform_listener.h"
 #include "costmap_2d/costmap_2d_ros.h"
 #include "tf2_ros/buffer.h"
 #include "stdbool.h"
+
+#include "move_base/move_base.h"
+#include "tf2_ros/transform_listener.h"
 
 int main(int argc, char** argv){
 
@@ -22,7 +24,11 @@ int main(int argc, char** argv){
 	std::cout<<"IT WORKS 2!"<<std::endl;
 	costmap_2d::Costmap2DROS costmap("costmap", buffer);
 	costmap.start();
-	//costmap_2d::Costmap2DPublisher publisher(&n,costmap.getCostmap(),"map","/costmap",true);
-	//publisher.publishCostmap();
-    return 0;
+	costmap.updateMap();
+
+
+	ros::spin();
+
+
+	return 0;
 }
