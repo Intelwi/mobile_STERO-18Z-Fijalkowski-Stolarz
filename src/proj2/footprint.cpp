@@ -21,23 +21,23 @@ int main(int argc, char **argv)
     polygon.points.reserve(5);
 
     geometry_msgs::Point32 p1;
-    p1.x = -0.325;
-    p1.y = -0.325;
+    p1.x = -0.25;
+    p1.y = -0.18;
     polygon.points.push_back(p1);
 
     geometry_msgs::Point32 p2;
-    p2.x = -0.325;
-    p2.y = 0.325;
+    p2.x = 0.25;
+    p2.y = -0.18;
     polygon.points.push_back(p2);
 
     geometry_msgs::Point32 p3;
-    p3.x = 0.325;
-    p3.y = 0.325;
+    p3.x = 0.25;
+    p3.y = 0.18;
     polygon.points.push_back(p3);
 
     geometry_msgs::Point32 p4;
-    p4.x = 0.46;
-    p4.y = 0.0;
+    p4.x = -0.25;
+    p4.y = 0.18;
     polygon.points.push_back(p4);
 
     geometry_msgs::Point32 p5;
