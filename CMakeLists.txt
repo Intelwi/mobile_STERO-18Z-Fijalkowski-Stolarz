@@ -4,9 +4,10 @@ set(CMAKE_CXX_STANDARD 11)
 
 find_package(catkin REQUIRED COMPONENTS
 	rospy
-	std_msgs
-	message_generation
 	roscpp
+	std_msgs
+	geometry_msgs
+	message_generation
 	tf
 	costmap_2d
 	move_base
@@ -21,11 +22,13 @@ add_message_files(
 add_service_files(
 	FILES
 	CallItAsUWantIt.srv
+	Positioning.srv
 )
 
 generate_messages(
 	DEPENDENCIES
 	std_msgs
+	geometry_msgs
 )
 
 catkin_package(
@@ -36,21 +39,20 @@ catkin_package(
 )
 
 include_directories(include
-                    ${catkin_INCLUDE_DIRS})
-
-
+	${catkin_INCLUDE_DIRS})
 
 set(COSTMAP_NODE_SOURCES
-    src/proj2/costmap.cpp
-  )
+	src/proj2/costmap.cpp
+)
 
 add_executable(costmap ${COSTMAP_NODE_SOURCES})
-
 target_link_libraries(costmap ${catkin_LIBRARIES})
 
 add_executable(footprint src/proj2/footprint.cpp)
-
 target_link_libraries(footprint ${catkin_LIBRARIES})
+
+add_executable(alles_maker src/proj2/alles_maker.cpp)
+target_link_libraries(alles_maker ${catkin_LIBRARIES})
 
 install (DIRECTORY worlds/ DESTINATION share/${CMAKE_PROJECT_NAME}/worlds 
          FILES_MATCHING PATTERN "*.world")

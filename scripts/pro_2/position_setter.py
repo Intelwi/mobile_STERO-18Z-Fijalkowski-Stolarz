@@ -2,6 +2,7 @@
 
 import sys
 import rospy
+from geometry_msgs.msg import Pose2D
 from stero_mobile_init.srv import Positioning
 
 
@@ -24,7 +25,7 @@ def countPose2D(x, y, theta):
 
 
 def usage():
-	return "Usage is:\n	%s [x y]" %sys.argv[0]
+	return "Usage is:\n	%s [x y theta]" %sys.argv[0]
 
 
 if __name__ == "__main__":
