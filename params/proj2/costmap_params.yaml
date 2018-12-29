@@ -15,7 +15,7 @@ static_map: {map_topic: /map}
 obstacles:
     observation_sources: base_scan
     base_scan: {data_type: LaserScan, clearing: true, marking: true, topic: /laser_scan}
-#inflation_layer: {inflation_radius: 0.5}
+inflation_layer: {inflation_radius: 0.5}
 
 
 
