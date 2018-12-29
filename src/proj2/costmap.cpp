@@ -17,8 +17,8 @@ int main(int argc, char** argv){
 	ros::init(argc,argv,"publish_costmap");
 	ros::NodeHandle n;
 	std::cout<<"IT WORKS 0!"<<std::endl;
-	//tf::TransformListener tf(ros::Duration(10));
 	tf2_ros::Buffer buffer(ros::Duration(10),true);
+	tf2_ros::TransformListener tf(buffer, n);
 	std::cout<<"IT WORKS 1!"<<std::endl;
 	buffer.setUsingDedicatedThread(true);//bo tf jest publikowany przez inny watek
 	std::cout<<"IT WORKS 2!"<<std::endl;

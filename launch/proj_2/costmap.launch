@@ -3,9 +3,16 @@ Example launch file: launches the scan matcher with pre-recorded data
 -->
 
 <launch>
-	<node name="static_tf0" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 100"/>
+	<include file="$(find stero_mobile_init)/launch/elektron_world.launch" />
+	<node name="static_tf0" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map odom"/>
+
 	<node name="map_server" pkg="map_server" type="map_server" args="$(find stero_mobile_init)/maps/map_of_home/map_of_home.yaml"/>
-	<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="costmap" />
-	<node name="costmap" pkg="stero_mobile_init" type="costmap" />
+
+	<node name="costmap" pkg="stero_mobile_init" type="costmap" >
+		<remap from="/map" to="map"/>
+		<remap from="/laser_scan" to="laser_scan"/>
+		<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="costmap" />
+	</node>
+	
 	<node name="footprint" pkg="stero_mobile_init" type="footprint" />
 </launch>
