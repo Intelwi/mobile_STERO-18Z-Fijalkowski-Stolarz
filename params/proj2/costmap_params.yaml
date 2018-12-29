@@ -4,17 +4,17 @@ publish_frequency: 2
 update_frequency: 1
 transform_tolerance: 2
 static_map: true
-#always_send_full_costmap: true
+always_send_full_costmap: true
 #footprint: [[-0.325, -0.325], [-0.325, 0.325], [0.325, 0.325], [0.46, 0.0], [0.325, -0.325]]
 
 plugins: 
     - {name: static_map,       type: "costmap_2d::StaticLayer"}
     - {name: obstacles,        type: "costmap_2d::VoxelLayer"}
     - {name: inflation_layer,     type: "costmap_2d::InflationLayer"}
-static_map: {map_topic: map}
+static_map: {map_topic: /map}
 obstacles:
     observation_sources: base_scan
-    base_scan: {data_type: LaserScan, clearing: true, marking: true, topic: laser_scan}
+    base_scan: {data_type: LaserScan, clearing: true, marking: true, topic: /laser_scan}
 #inflation_layer: {inflation_radius: 0.5}
 
 

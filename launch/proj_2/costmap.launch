@@ -9,8 +9,6 @@ Example launch file: launches the scan matcher with pre-recorded data
 	<node name="map_server" pkg="map_server" type="map_server" args="$(find stero_mobile_init)/maps/map_of_home/map_of_home.yaml"/>
 
 	<node name="costmap" pkg="stero_mobile_init" type="costmap" >
-		<remap from="/map" to="map"/>
-		<remap from="/laser_scan" to="laser_scan"/>
 		<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="costmap" />
 	</node>
 	
