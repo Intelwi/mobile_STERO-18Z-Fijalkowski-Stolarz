@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::Publisher polygon_pub = n.advertise<geometry_msgs::Polygon>("costmap/footprint", 1000);
+  ros::Publisher polygon_pub = n.advertise<geometry_msgs::Polygon>("/costmap/footprint", 1000);
 
   ros::Rate loop_rate(10);
 
