@@ -12,5 +12,6 @@ Example launch file: launches the scan matcher with pre-recorded data
 		<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="costmap" />
 	</node>
 	
+
 	<node name="footprint" pkg="stero_mobile_init" type="footprint" />
 </launch>
