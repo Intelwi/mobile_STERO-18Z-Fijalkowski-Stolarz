@@ -10,7 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
 	tf
 	costmap_2d
-	move_base
+	global_planner
+	kdl_conversions
 )
 
 add_message_files(
