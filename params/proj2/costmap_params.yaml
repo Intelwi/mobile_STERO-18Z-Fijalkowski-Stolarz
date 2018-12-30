@@ -6,6 +6,8 @@ transform_tolerance: 2
 rolling_window: false
 static_map: true
 always_send_full_costmap: true
+inflation_radius: 0.5
+cost_scaling_factor: 0.2
 #footprint: [[-0.25, -0.18], [0.25, -0.18], [0.25, 0.18], [-0.25, 0.18]]
 
 plugins: 
@@ -17,7 +19,6 @@ obstacles:
     observation_sources: base_scan
     base_scan: {data_type: LaserScan, clearing: true, marking: true, topic: /laser_scan}
 inflation_layer: {inflation_radius: 0.5, cost_scaling_factor: 0.2}
-
 
 
 

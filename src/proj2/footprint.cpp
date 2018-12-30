@@ -13,12 +13,12 @@ int main(int argc, char **argv)
 
   ros::Rate loop_rate(10);
 
-  int count = 0;
   while (ros::ok())
   {
+
     geometry_msgs::Polygon polygon;
 
-    polygon.points.reserve(5);
+    polygon.points.reserve(4);
 
     geometry_msgs::Point32 p1;
     p1.x = -0.25;
@@ -39,11 +39,6 @@ int main(int argc, char **argv)
     p4.x = -0.25;
     p4.y = 0.18;
     polygon.points.push_back(p4);
-
-    geometry_msgs::Point32 p5;
-    p5.x = 0.325;
-    p5.y = -0.325;
-    polygon.points.push_back(p5);
 
     polygon_pub.publish(polygon);
     ros::spinOnce();

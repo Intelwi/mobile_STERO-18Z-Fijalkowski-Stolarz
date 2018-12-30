@@ -18,13 +18,13 @@ int main(int argc, char** argv){
 	ros::NodeHandle n;
 	std::cout<<"IT WORKS 0!"<<std::endl;
 	tf2_ros::Buffer buffer(ros::Duration(10),true);
-	tf2_ros::TransformListener tf(buffer);
+	//buffer.setUsingDedicatedThread(true);//bo tf jest publikowany przez inny watek
 	std::cout<<"IT WORKS 1!"<<std::endl;
-	buffer.setUsingDedicatedThread(true);//bo tf jest publikowany przez inny watek
+	tf2_ros::TransformListener tf(buffer);	
 	std::cout<<"IT WORKS 2!"<<std::endl;
 	costmap_2d::Costmap2DROS costmap("costmap", buffer);
-	costmap.start();
-	costmap.updateMap();
+	//costmap.start();
+	//costmap.updateMap();
 
 
 	ros::spin();
