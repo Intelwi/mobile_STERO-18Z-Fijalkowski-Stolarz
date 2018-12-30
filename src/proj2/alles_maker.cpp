@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 
 	ROS_INFO("READY TO GET TARGET POSITION");
 
-	ros::Rate loop_rate(0.5);
+	ros::Rate loop_rate(2);
 	while(ros::ok()){
 
 		elektron_global_planner.makePlan(start,target,plan);
