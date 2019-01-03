@@ -10,6 +10,8 @@ Example launch file: launches the scan matcher with pre-recorded data
 
 	<node name="alles_maker" pkg="stero_mobile_init" type="alles_maker" >
 		<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="costmap" />
+		<rosparam file="$(find stero_mobile_init)/params/proj2/local_costmap_params.yaml" command="load" ns="local_costmap" />
+		<remap from="odom" to="elektron/mobile_base_controller/odom"/>
 	</node>
 	
 

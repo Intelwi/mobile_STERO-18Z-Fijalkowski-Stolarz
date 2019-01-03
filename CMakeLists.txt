@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 	costmap_2d
 	global_planner
 	kdl_conversions
+	base_local_planner
 )
 
 add_message_files(

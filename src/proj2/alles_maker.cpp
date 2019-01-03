@@ -3,6 +3,7 @@
 #include "std_msgs/String.h"
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/Twist.h"
 #include <iostream>
 #include <cmath>
 #include "costmap_2d/costmap_2d_ros.h"
@@ -10,6 +11,7 @@
 #include "stdbool.h"
 #include "tf2_ros/transform_listener.h"
 #include <global_planner/planner_core.h>
+#include <base_local_planner/trajectory_planner_ros.h>
 #include <kdl/frames.hpp>
 #include <kdl/frames_io.hpp>
 #include <vector>
@@ -17,12 +19,20 @@
 float x, y, theta;
 double qaternion[4];
 
+//flaga czy rozpoczeto planowanie
+bool isStarted = false;
+
 //zaplanowana sciezka jazdy
 std::vector<geometry_msgs::PoseStamped> plan;
-//punkt startowy -  bedzie pobierane z odometrii to jest wersja prbna
+
+//punkt startowy -  bedzie pobierane z odometrii to jest wersja próbna
 geometry_msgs::PoseStamped start;
+
 //punkt koncowy
 geometry_msgs::PoseStamped target;
+
+//wyliczone predkosci przez planer lokalny
+geometry_msgs::Twist velocities;
 
 int theFunction()
 {
@@ -60,6 +70,8 @@ int theFunction()
 	target.pose.orientation.y = qaternion[1];
 	target.pose.orientation.z = qaternion[2];
 	target.pose.orientation.w = qaternion[3];
+	
+	isStarted = true;
 
 	return 13;
 }
@@ -86,21 +98,42 @@ int main(int argc, char **argv)
 	
 	ros::init(argc, argv, "alles_server");
 	ros::NodeHandle n;
-
+	
+	//inicjalizacja globalnego planera i jego mapy kosztów
 	tf2_ros::Buffer buffer(ros::Duration(10),true);
 	tf2_ros::TransformListener tf(buffer);	
 	costmap_2d::Costmap2DROS costmap("costmap", buffer);
 	global_planner::GlobalPlanner elektron_global_planner("global_planner",costmap.getCostmap(),"costmap");
+
+	//inicjalizacja lokalnego planera i jego mapy kosztów
+	tf2_ros::Buffer local_buffer(ros::Duration(10),true);
+	tf2_ros::TransformListener local_tf(local_buffer);	
+	costmap_2d::Costmap2DROS local_costmap("local_costmap", local_buffer);
+	base_local_planner::TrajectoryPlannerROS elektron_local_planner;
+	elektron_local_planner.initialize("local_planner",&local_buffer,&local_costmap);
 	
 	ros::ServiceServer service = n.advertiseService("set_position", reqHandler);
 
 	ROS_INFO("READY TO GET TARGET POSITION");
 
 	ros::Rate loop_rate(2);
-	while(ros::ok()){
 
-		elektron_global_planner.makePlan(start,target,plan);
-		elektron_global_planner.publishPlan(plan);//zeby se zobaczyc sciezke w rviz
+	bool isPlanNotComputed = true;
+
+	while(ros::ok()){
+		if(isStarted)
+		{
+			if(isPlanNotComputed)
+			{
+				elektron_global_planner.makePlan(start,target,plan);
+				elektron_local_planner.setPlan(plan);
+				isPlanNotComputed = false;
+			}
+			
+			elektron_global_planner.publishPlan(plan);//zeby se zobaczyc sciezke w rviz
+			//elektron_local_planner.computeVelocityCommands(velocities);
+
+		}
 		ros::spinOnce();
 		loop_rate.sleep();
 
