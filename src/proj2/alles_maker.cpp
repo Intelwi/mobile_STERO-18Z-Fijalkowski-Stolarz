@@ -19,6 +19,9 @@
 float x, y, theta;
 double qaternion[4];
 
+//flaga czy robot wyznaczył lokalną trajektorię
+bool isTrajectoryComputed = false;
+
 //flaga czy rozpoczeto planowanie
 bool isStarted = false;
 
@@ -131,7 +134,8 @@ int main(int argc, char **argv)
 			}
 			
 			elektron_global_planner.publishPlan(plan);//zeby se zobaczyc sciezke w rviz
-			//elektron_local_planner.computeVelocityCommands(velocities);
+			isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001,true);
+			elektron_local_planner.computeVelocityCommands(velocities);//z jakiegoś powodu ten kawałek kodu wywala [ERROR] [1546524878.017346415, 155.898000000]: No Transform available Error: "costmap" passed to lookupTransform argument source_frame does not exist. 
 
 		}
 		ros::spinOnce();
