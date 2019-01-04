@@ -116,10 +116,11 @@ int main(int argc, char **argv)
 	elektron_local_planner.initialize("local_planner",&local_buffer,&local_costmap);
 	
 	ros::ServiceServer service = n.advertiseService("set_position", reqHandler);
+	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Twist>("/mux_vel_raw/cmd_vel", 1000);
 
 	ROS_INFO("READY TO GET TARGET POSITION");
 
-	ros::Rate loop_rate(2);
+	ros::Rate loop_rate(10);
 
 	bool isPlanNotComputed = true;
 
@@ -135,7 +136,10 @@ int main(int argc, char **argv)
 			
 			elektron_global_planner.publishPlan(plan);//zeby se zobaczyc sciezke w rviz
 			isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001,true);
-			elektron_local_planner.computeVelocityCommands(velocities);//z jakiegoś powodu ten kawałek kodu wywala [ERROR] [1546524878.017346415, 155.898000000]: No Transform available Error: "costmap" passed to lookupTransform argument source_frame does not exist. 
+			elektron_local_planner.computeVelocityCommands(velocities); 
+			std:: cout<<velocities<<std::endl;
+			velocity_pub.publish(velocities);
+			
 
 		}
 		ros::spinOnce();

@@ -8,7 +8,7 @@ Example launch file: launches the scan matcher with pre-recorded data
 
 	<node name="map_server" pkg="map_server" type="map_server" args="$(find stero_mobile_init)/maps/map_of_home/map_of_home.yaml"/>
 
-	<node name="alles_maker" pkg="stero_mobile_init" type="alles_maker" >
+	<node name="alles_maker" pkg="stero_mobile_init" type="alles_maker" output="screen">
 		<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="costmap" />
 		<rosparam file="$(find stero_mobile_init)/params/proj2/local_costmap_params.yaml" command="load" ns="local_costmap" />
 		<remap from="odom" to="elektron/mobile_base_controller/odom"/>
