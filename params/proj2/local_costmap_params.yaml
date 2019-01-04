@@ -10,6 +10,10 @@ global_frame: base_link
 robot_base_frame: base_link
 height: 3
 width: 3
+update_frequency: 20
+publish_frequency: 15 
+always_send_full_costmap: true
+ 
 obstacle_layer:
   enabled:              true
   max_obstacle_height:  0.6
