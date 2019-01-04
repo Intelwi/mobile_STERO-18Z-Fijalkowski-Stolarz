@@ -5,3 +5,5 @@ rosrun gmapping slam_gmapping scan:=laser_scan
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py cmd_vel:=/mux_vel_keyboard/cmd_vel
 rosservice call /global_planner/planner/make_plan
 
+recovery behavoiur -> rotate behaviour
+

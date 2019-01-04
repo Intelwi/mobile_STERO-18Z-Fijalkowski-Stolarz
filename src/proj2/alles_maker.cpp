@@ -47,7 +47,7 @@ int theFunction()
 
 
 	//start bedzie pobierane z odometrii to jest wersja prbna
-	start.header.frame_id="costmap";
+	start.header.frame_id="map";
 	start.header.stamp = ros::Time(0);
 
 	start.pose.position.x = 0;
@@ -62,7 +62,7 @@ int theFunction()
 
 
 	//punkt docelowy
-	target.header.frame_id="costmap";
+	target.header.frame_id="map";
 	target.header.stamp = ros::Time(0);
 
 	target.pose.position.x = x;
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 	tf2_ros::Buffer buffer(ros::Duration(10),true);
 	tf2_ros::TransformListener tf(buffer);	
 	costmap_2d::Costmap2DROS costmap("costmap", buffer);
-	global_planner::GlobalPlanner elektron_global_planner("global_planner",costmap.getCostmap(),"costmap");
+	global_planner::GlobalPlanner elektron_global_planner("global_planner",costmap.getCostmap(),"map");
 
 	//inicjalizacja lokalnego planera i jego mapy kosztów
 	tf2_ros::Buffer local_buffer(ros::Duration(10),true);

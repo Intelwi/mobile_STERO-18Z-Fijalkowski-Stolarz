@@ -6,7 +6,10 @@ max_obstacle_height: 0.60  # assume something like an arm is mounted on top of t
 footprint: [[-0.25, -0.18], [0.25, -0.18], [0.25, 0.18], [-0.25, 0.18]]
 map_type: voxel
 rolling_window: true
-
+global_frame: base_link
+robot_base_frame: base_link
+height: 3
+width: 3
 obstacle_layer:
   enabled:              true
   max_obstacle_height:  0.6
