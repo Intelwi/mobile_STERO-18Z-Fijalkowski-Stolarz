@@ -18,6 +18,7 @@
 
 float x, y, theta;
 double qaternion[4];
+bool isPlanNotComputed = true;
 
 //flaga czy robot wyznaczył lokalną trajektorię
 bool isTrajectoryComputed = false;
@@ -45,7 +46,7 @@ int theFunction()
 	r1.GetQuaternion(qaternion[0],qaternion[1],qaternion[2],qaternion[3]);
 
 
-
+	
 	//start bedzie pobierane z odometrii to jest wersja prbna
 	start.header.frame_id="map";
 	start.header.stamp = ros::Time(0);
@@ -73,9 +74,8 @@ int theFunction()
 	target.pose.orientation.y = qaternion[1];
 	target.pose.orientation.z = qaternion[2];
 	target.pose.orientation.w = qaternion[3];
-	
-	isStarted = true;
 
+	isStarted = true;
 	return 13;
 }
 
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 
 	ros::Rate loop_rate(10);
 
-	bool isPlanNotComputed = true;
+	isPlanNotComputed = true;
 
 	while(ros::ok()){
 		if(isStarted)
