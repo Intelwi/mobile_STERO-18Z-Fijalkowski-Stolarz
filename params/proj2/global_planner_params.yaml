@@ -1,0 +1,5 @@
+allow_unknown: true
+default_tolerance: 0.1
+lethal_cost: 253 #jak jest np 50 to nie planuje sciezki przez waskie drzwi, jak jest jakies 253 to wtedy tak
+neutral_cost: 50
+cost_factor: 3

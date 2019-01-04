@@ -1,7 +1,3 @@
-<!--
-Example launch file: launches the scan matcher with pre-recorded data
--->
-
 <launch>
 	<include file="$(find stero_mobile_init)/launch/elektron_world.launch" />
 	<node name="static_tf0" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map odom"/>
@@ -11,6 +7,8 @@ Example launch file: launches the scan matcher with pre-recorded data
 	<node name="alles_maker" pkg="stero_mobile_init" type="alles_maker" output="screen">
 		<rosparam file="$(find stero_mobile_init)/params/proj2/costmap_params.yaml" command="load" ns="costmap" />
 		<rosparam file="$(find stero_mobile_init)/params/proj2/local_costmap_params.yaml" command="load" ns="local_costmap" />
+		<rosparam file="$(find stero_mobile_init)/params/proj2/global_planner_params.yaml" command="load" ns="elektron_global_planner" />
+		<rosparam file="$(find stero_mobile_init)/params/proj2/local_planner_params.yaml" command="load" ns="elektron_local_planner" />
 		<remap from="odom" to="elektron/mobile_base_controller/odom"/>
 	</node>
 	

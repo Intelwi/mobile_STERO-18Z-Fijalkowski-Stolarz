@@ -106,14 +106,16 @@ int main(int argc, char **argv)
 	tf2_ros::Buffer buffer(ros::Duration(10),true);
 	tf2_ros::TransformListener tf(buffer);	
 	costmap_2d::Costmap2DROS costmap("costmap", buffer);
-	global_planner::GlobalPlanner elektron_global_planner("global_planner",costmap.getCostmap(),"map");
+	costmap.start();
+	global_planner::GlobalPlanner elektron_global_planner("elektron_global_planner",costmap.getCostmap(),"map");
 
 	//inicjalizacja lokalnego planera i jego mapy kosztów
 	tf2_ros::Buffer local_buffer(ros::Duration(10),true);
 	tf2_ros::TransformListener local_tf(local_buffer);	
 	costmap_2d::Costmap2DROS local_costmap("local_costmap", local_buffer);
+	local_costmap.start();
 	base_local_planner::TrajectoryPlannerROS elektron_local_planner;
-	elektron_local_planner.initialize("local_planner",&local_buffer,&local_costmap);
+	elektron_local_planner.initialize("elektron_local_planner",&local_buffer,&local_costmap);
 	
 	ros::ServiceServer service = n.advertiseService("set_position", reqHandler);
 	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Twist>("/mux_vel_raw/cmd_vel", 1000);
