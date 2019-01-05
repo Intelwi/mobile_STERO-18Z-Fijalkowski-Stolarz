@@ -1,12 +1,15 @@
-#footprint: [[-0.25, -0.18], [0.25, -0.18], [0.25, 0.18], [-0.25, 0.18]]
-map_type: voxel
 rolling_window: false
 static_map: true
-map_topic: map
 global_frame: map
 robot_base_frame: base_link
 
-inflation_layer:
-  enabled:              true
-  cost_scaling_factor:  5.0  
-  inflation_radius:     0.26  
+plugins: 
+    - {name: static_map,       type: "costmap_2d::StaticLayer"}
+    - {name: inflation_layer,     type: "costmap_2d::InflationLayer"}
+
+static_map: 
+   map_topic: map
+
+inflation_layer: 
+   inflation_radius: 0.26
+   cost_scaling_factor: 10.0

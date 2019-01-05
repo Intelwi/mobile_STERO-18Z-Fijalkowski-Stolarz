@@ -137,8 +137,10 @@ int main(int argc, char **argv)
 			}
 			
 			elektron_global_planner.publishPlan(plan);//zeby se zobaczyc sciezke w rviz
-			isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001,true);
+			//isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001,true);
+			local_costmap.updateMap();
 			elektron_local_planner.computeVelocityCommands(velocities); 
+
 			std:: cout<<velocities<<std::endl;
 			velocity_pub.publish(velocities);
 			

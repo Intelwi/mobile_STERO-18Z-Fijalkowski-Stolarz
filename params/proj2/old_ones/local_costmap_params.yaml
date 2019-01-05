@@ -1,0 +1,32 @@
+footprint: [[-0.25, -0.18], [0.25, -0.18], [0.25, 0.18], [-0.25, 0.18]]
+rolling_window: true
+global_frame: base_link
+robot_base_frame: base_link
+height: 3
+width: 3
+update_frequency: 20
+publish_frequency: 15 
+always_send_full_costmap: true
+origin_x: -1.5
+origin_y: -1.5
+resolution: 0.05
+ 
+obstacle_layer:
+  enabled:              true
+  unknown_threshold:    15
+  mark_threshold:       0
+  track_unknown_space:  true 
+  obstacle_range: 2.5
+  raytrace_range: 3.0
+  observation_sources:  scan
+  scan:
+    data_type: LaserScan
+    topic: laser_scan
+    marking: true
+    clearing: true
+    expected_update_rate: 10
+
+inflation_layer:
+  enabled:              true
+  cost_scaling_factor:  10.0  
+  inflation_radius:     0.26 
