@@ -8,6 +8,7 @@
 #include "geometry_msgs/Twist.h"
 #include <iostream>
 #include <cmath>
+//#include <math.h>
 #include "costmap_2d/costmap_2d_ros.h"
 #include "tf2_ros/buffer.h"
 #include "stdbool.h"
@@ -51,19 +52,6 @@ geometry_msgs::PoseStamped target;
 geometry_msgs::Twist velocities;
 
 
-int theFunction()
-{
-	//start bedzie pobierane z odometrii to jest wersja prbna
-	start = convertToPoseStamped(0, 0, 0);
-
-	//punkt docelowy
-	target = convertToPoseStamped(targX, targY, targTheta);
-
-	isStarted = true;
-	return 13;
-}
-
-
 bool reqHandler(stero_mobile_init::Positioning::Request  &req,
                 stero_mobile_init::Positioning::Response  &res)
 {
@@ -80,23 +68,28 @@ bool reqHandler(stero_mobile_init::Positioning::Request  &req,
 }
 
 
+/* Odbiera aktualną pozycję robota i wstawia do zmiennej "start".
+ * Robi to tylko wtedy, gdy robot nie wykonuje zadania */
 void getOdomNav(const nav_msgs::Odometry::ConstPtr&  msg)
 {
 	if(!isStarted)
 	{
 		std::cout<<"elo from getOdomNav"<<std::endl;
-		//start.header = msg->header;
-		//start.pose = msg->pose;
-		//std::cout<<msg->pose<<std::endl;
+		start.header.frame_id = "map";
+		start.header.stamp = ros::Time(0);
+
+		start.pose.position.x = msg->pose.pose.position.x;
+		start.pose.position.y = msg->pose.pose.position.y;
+		
+		start.pose.orientation.x = msg->pose.pose.orientation.x;
+		start.pose.orientation.y = msg->pose.pose.orientation.y;
+		start.pose.orientation.z = msg->pose.pose.orientation.z;
+		start.pose.orientation.w = msg->pose.pose.orientation.w;
 	}
 }
 
 
 global_planner::GlobalPlanner *elektron_global_planner;
-
-tf2_ros::TransformListener *local_tf;
-tf2_ros::Buffer *local_buffer;
-costmap_2d::Costmap2DROS *local_costmap;
 
 ros::Rate *loop_rate;
 ros::Publisher velocity_pub;
@@ -165,6 +158,12 @@ int main(int argc, char **argv)
 }
 
 
+// Poniższe obiekty możnaby chyba dać lokalne static,
+// ale niech już tak będzie
+tf2_ros::TransformListener *local_tf;
+tf2_ros::Buffer *local_buffer;
+costmap_2d::Costmap2DROS *local_costmap;
+
 int planExecutor()
 {
 	int stopCounter = 0; // licznik zatrzymań
@@ -181,8 +180,7 @@ int planExecutor()
 		localCrewInitiated = true;
 	}
 	
-	//start bedzie pobierane z odometrii to jest wersja prbna
-	start = convertToPoseStamped(0, 0, 0);
+	//punkt startowy jest pobierany z odometrii
 
 	//punkt docelowy
 	target = convertToPoseStamped(targX, targY, targTheta);
@@ -207,14 +205,23 @@ int planExecutor()
 			std::cout<<velocities<<std::endl;
 			velocity_pub.publish(velocities);
 			
-			if(velocities.linear.x == 0 && velocities.angular.z == 0)
+			if(velocities.linear.x == 0 && velocities.angular.z == 0)//czy już skończył jazde
 			{
 				if(stopCounter++ == 5) // bo czasem stawał w połowie drogi
 				{
 					isStarted = false;
 					isPlanComputed = false;
-					//sprawdź czy jest na miejscu z odometrii
-					return 0;
+					ros::spinOnce(); // czekamy na aktualizację odometrii
+					double dx = start.pose.position.x - targX;
+					double dy = start.pose.position.y - targY;
+					double howFar = sqrt(dx*dx + dy*dy);
+					// nie sprawdzamy obrotu
+					// bo trzebaby najpierw z quaternionów na RPY
+					// a potem różnicę sinusów
+					if(howFar < 0.2)
+						return 0;
+					else
+						return -1;
 				}
 			}
 			else
