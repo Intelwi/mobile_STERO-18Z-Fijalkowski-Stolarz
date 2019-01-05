@@ -55,6 +55,12 @@ geometry_msgs::Twist velocities;
 bool reqHandler(stero_mobile_init::Positioning::Request  &req,
                 stero_mobile_init::Positioning::Response  &res)
 {
+	if(isStarted)
+	{
+		res.status = -66;
+		ROS_INFO("sending back response: [%d]", res.status);
+		return true;
+	}
 	targX = req.position.x;
 	targY = req.position.y;
 	targTheta = req.position.theta;

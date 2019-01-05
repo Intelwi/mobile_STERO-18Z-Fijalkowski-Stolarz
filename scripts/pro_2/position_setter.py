@@ -56,5 +56,5 @@ if __name__ == "__main__":
 	else:
 		print usage()
 		sys.exit(1)
-	print "Requesting: %s those numbers: %s & %s" %(x, y, theta)
+	print "Requesting target position: (%s, %s) and orientation: %s rad..." %(x, y, theta)
 	print "Response status is: ", callThaServer(countPose2D(x, y, theta)) # or countPoseStamped(x, y, theta)
