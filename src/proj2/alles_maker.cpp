@@ -21,6 +21,8 @@
 /* Funkcja konwertująca pozycję (x,y,theta) na PoseStamped */
 geometry_msgs::PoseStamped convertToPoseStamped(double, double, double);
 
+int planExecutor();
+
 /* Współrzędne celu */
 double targX, targY, targTheta;
 
@@ -32,6 +34,9 @@ bool isTrajectoryComputed = false;
 
 //flaga czy rozpoczeto planowanie
 bool isStarted = false;
+
+//flaga czy zainicjowano local ekipe
+bool localCrewInitiated = false;
 
 //zaplanowana sciezka jazdy
 std::vector<geometry_msgs::PoseStamped> plan;
@@ -68,7 +73,7 @@ bool reqHandler(stero_mobile_init::Positioning::Request  &req,
 	
 	ROS_INFO("I got co-ordinates: (%f, %f) and orientation: %f rad", targX, targY, targTheta);
 
-	res.status = theFunction();
+	res.status = planExecutor();
 	ROS_INFO("sending back response: [%d]", res.status);
 	
 	return true;
@@ -79,12 +84,22 @@ void getOdomNav(const nav_msgs::Odometry::ConstPtr&  msg)
 {
 	if(!isStarted)
 	{
-		//start.header = msg.header;
-		//start.pose = msg.pose;
-		std::cout<<msg<<std::endl;
+		std::cout<<"elo from getOdomNav"<<std::endl;
+		//start.header = msg->header;
+		//start.pose = msg->pose;
+		//std::cout<<msg->pose<<std::endl;
 	}
 }
 
+
+global_planner::GlobalPlanner *elektron_global_planner;
+
+tf2_ros::TransformListener *local_tf;
+tf2_ros::Buffer *local_buffer;
+costmap_2d::Costmap2DROS *local_costmap;
+
+ros::Rate *loop_rate;
+ros::Publisher velocity_pub;
 
 int main(int argc, char **argv)
 {
@@ -93,51 +108,120 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	
 	//inicjalizacja globalnego planera i jego mapy kosztów
-	tf2_ros::Buffer								buffer(ros::Duration(10),true);
-	tf2_ros::TransformListener					tf(buffer);
-	costmap_2d::Costmap2DROS					costmap("costmap", buffer);
+	tf2_ros::Buffer  buffer(ros::Duration(10),true);
+	tf2_ros::TransformListener  tf(buffer);
+	costmap_2d::Costmap2DROS  costmap("costmap", buffer);
 	costmap.start();
-	global_planner::GlobalPlanner				elektron_global_planner("elektron_global_planner",costmap.getCostmap(),"map");
+	elektron_global_planner = new global_planner::GlobalPlanner("elektron_global_planner",costmap.getCostmap(),"map");
 
 	//inicjalizacja lokalnego planera i jego mapy kosztów
-	tf2_ros::Buffer								local_buffer(ros::Duration(10),true);
-	tf2_ros::TransformListener					local_tf(local_buffer);	
-	costmap_2d::Costmap2DROS					local_costmap("local_costmap", local_buffer);
-	local_costmap.start();
-	base_local_planner::TrajectoryPlannerROS	elektron_local_planner;
-	elektron_local_planner.initialize("elektron_local_planner",&local_buffer,&local_costmap);
+	/*local_buffer = new tf2_ros::Buffer(ros::Duration(10),true);
+	local_tf = new tf2_ros::TransformListener(*local_buffer);
+	local_costmap = new costmap_2d::Costmap2DROS("local_costmap", *local_buffer);
+	(*local_costmap).start();
+	base_local_planner::TrajectoryPlannerROS elektron_local_planner;
+	elektron_local_planner.initialize("elektron_local_planner",local_buffer,local_costmap);*/
 	
 	//inicjalizacja servisu odbierającego położenie docelowe
 	ros::ServiceServer service = n.advertiseService("set_position", reqHandler);
 	//inicjalizacja publikowania prędkości do robota
-	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Twist>("/mux_vel_raw/cmd_vel", 500);
+	velocity_pub = n.advertise<geometry_msgs::Twist>("/mux_vel_raw/cmd_vel", 500);
 	//inicjalizacja odbierania aktualnej pozycji z odometrii
-	ros::Subscriber odometry_get = n.subscribe("my_topic", 10, getOdomNav); // second arg: buffer size (in tutorial = 1000)
+	ros::Subscriber odometry_get = n.subscribe("/elektron/mobile_base_controller/odom", 10, getOdomNav); // second arg: buffer size (in tutorial = 1000)
 
-	ros::Rate loop_rate(10);
-
+	loop_rate = new ros::Rate(10);
+	
 	ROS_INFO("READY TO GET TARGET POSITION");
 
+	/*while(ros::ok())
+	{
+		if(isStarted)
+		{
+			if(!isPlanComputed)
+			{
+				(*elektron_global_planner).makePlan(start, target, plan);
+				elektron_local_planner.setPlan(plan);
+				isPlanComputed = true;
+			}
+			(*elektron_global_planner).publishPlan(plan);//zeby se zobaczyc sciezke w rviz
+			//isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001, true);
+			(*local_costmap).updateMap();
+			elektron_local_planner.computeVelocityCommands(velocities);
+			
+			std::cout<<velocities<<std::endl;
+			velocity_pub.publish(velocities);
+			
+			/*if(velocities.linear.x == 0 && velocities.angular.z == 0)
+			{
+				isStarted = false;
+				isPlanComputed = false;
+			}
+		}
+		ros::spinOnce();
+		(*loop_rate).sleep();
+	}*/
+	ros::spin();
+	return 0;
+}
+
+
+int planExecutor()
+{
+	int stopCounter = 0; // licznik zatrzymań
+	static base_local_planner::TrajectoryPlannerROS elektron_local_planner;
+	
+	//inicjalizacja lokalnego planera i jego mapy kosztów
+	if(!localCrewInitiated)
+	{
+		local_buffer = new tf2_ros::Buffer(ros::Duration(10),true);
+		local_tf = new tf2_ros::TransformListener(*local_buffer);
+		local_costmap = new costmap_2d::Costmap2DROS("local_costmap", *local_buffer);
+		(*local_costmap).start();
+		elektron_local_planner.initialize("elektron_local_planner", local_buffer, local_costmap);
+		localCrewInitiated = true;
+	}
+	
+	//start bedzie pobierane z odometrii to jest wersja prbna
+	start = convertToPoseStamped(0, 0, 0);
+
+	//punkt docelowy
+	target = convertToPoseStamped(targX, targY, targTheta);
+
+	isStarted = true;
+	
 	while(ros::ok())
 	{
 		if(isStarted)
 		{
 			if(!isPlanComputed)
 			{
-				elektron_global_planner.makePlan(start, target, plan);
+				(*elektron_global_planner).makePlan(start, target, plan);
 				elektron_local_planner.setPlan(plan);
 				isPlanComputed = true;
 			}
-			elektron_global_planner.publishPlan(plan);//zeby se zobaczyc sciezke w rviz
+			(*elektron_global_planner).publishPlan(plan);//zeby se zobaczyc sciezke w rviz
 			//isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001, true);
-			local_costmap.updateMap();
+			(*local_costmap).updateMap();
 			elektron_local_planner.computeVelocityCommands(velocities);
 			
 			std::cout<<velocities<<std::endl;
 			velocity_pub.publish(velocities);
+			
+			if(velocities.linear.x == 0 && velocities.angular.z == 0)
+			{
+				if(stopCounter++ == 5) // bo czasem stawał w połowie drogi
+				{
+					isStarted = false;
+					isPlanComputed = false;
+					//sprawdź czy jest na miejscu z odometrii
+					return 0;
+				}
+			}
+			else
+				stopCounter = 0;
 		}
 		ros::spinOnce();
-		loop_rate.sleep();
+		(*loop_rate).sleep();
 	}
 	return 0;
 }
