@@ -25,6 +25,7 @@ add_service_files(
 	FILES
 	CallItAsUWantIt.srv
 	Positioning.srv
+	Positioning2.srv
 )
 
 generate_messages(

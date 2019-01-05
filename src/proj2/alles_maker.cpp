@@ -1,5 +1,7 @@
 #include "ros/ros.h"
-#include "stero_mobile_init/Positioning.h" // mobile_STERO-18Z-Fijalkowski-Stolarz/ LUB stero_mobile_init LUB nic
+#include "stero_mobile_init/Positioning.h"
+#include "stero_mobile_init/Positioning2.h"
+#include "nav_msgs/Odometry.h"
 #include "std_msgs/String.h"
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/PoseStamped.h"
@@ -16,9 +18,14 @@
 #include <kdl/frames_io.hpp>
 #include <vector>
 
-float x, y, theta;
-double qaternion[4];
-bool isPlanNotComputed = true;
+/* Funkcja konwertująca pozycję (x,y,theta) na PoseStamped */
+geometry_msgs::PoseStamped convertToPoseStamped(double, double, double);
+
+/* Współrzędne celu */
+double targX, targY, targTheta;
+
+//flaga czy planery zrobiły plany
+bool isPlanComputed = false;
 
 //flaga czy robot wyznaczył lokalną trajektorię
 bool isTrajectoryComputed = false;
@@ -29,7 +36,7 @@ bool isStarted = false;
 //zaplanowana sciezka jazdy
 std::vector<geometry_msgs::PoseStamped> plan;
 
-//punkt startowy -  bedzie pobierane z odometrii to jest wersja próbna
+//punkt startowy - bedzie pobierane z odometrii to jest wersja próbna
 geometry_msgs::PoseStamped start;
 
 //punkt koncowy
@@ -38,42 +45,14 @@ geometry_msgs::PoseStamped target;
 //wyliczone predkosci przez planer lokalny
 geometry_msgs::Twist velocities;
 
+
 int theFunction()
 {
-
-
-	KDL::Rotation r1=KDL::Rotation::RPY(0,0,theta);
-	r1.GetQuaternion(qaternion[0],qaternion[1],qaternion[2],qaternion[3]);
-
-
-	
 	//start bedzie pobierane z odometrii to jest wersja prbna
-	start.header.frame_id="map";
-	start.header.stamp = ros::Time(0);
-
-	start.pose.position.x = 0;
-	start.pose.position.y = 0;
-	//msg.pose.position.z = 0;
-
-	start.pose.orientation.x = 0;
-	start.pose.orientation.y = 0;
-	start.pose.orientation.z = 0;
-	start.pose.orientation.w = 1;
-
-
+	start = convertToPoseStamped(0, 0, 0);
 
 	//punkt docelowy
-	target.header.frame_id="map";
-	target.header.stamp = ros::Time(0);
-
-	target.pose.position.x = x;
-	target.pose.position.y = y;
-	//msg.pose.position.z = 0;
-
-	target.pose.orientation.x = qaternion[0];
-	target.pose.orientation.y = qaternion[1];
-	target.pose.orientation.z = qaternion[2];
-	target.pose.orientation.w = qaternion[3];
+	target = convertToPoseStamped(targX, targY, targTheta);
 
 	isStarted = true;
 	return 13;
@@ -83,11 +62,11 @@ int theFunction()
 bool reqHandler(stero_mobile_init::Positioning::Request  &req,
                 stero_mobile_init::Positioning::Response  &res)
 {
-	x = req.position.x;
-	y = req.position.y;
-	theta = req.position.theta;
+	targX = req.position.x;
+	targY = req.position.y;
+	targTheta = req.position.theta;
 	
-	ROS_INFO("I got co-ordinates: (%f, %f) and orientation: %f rad", x, y, theta);
+	ROS_INFO("I got co-ordinates: (%f, %f) and orientation: %f rad", targX, targY, targTheta);
 
 	res.status = theFunction();
 	ROS_INFO("sending back response: [%d]", res.status);
@@ -96,60 +75,93 @@ bool reqHandler(stero_mobile_init::Positioning::Request  &req,
 }
 
 
+void getOdomNav(const nav_msgs::Odometry::ConstPtr&  msg)
+{
+	if(!isStarted)
+	{
+		//start.header = msg.header;
+		//start.pose = msg.pose;
+		std::cout<<msg<<std::endl;
+	}
+}
+
+
 int main(int argc, char **argv)
 {
-	
+	//inicjalizacja glownego node'a
 	ros::init(argc, argv, "alles_server");
 	ros::NodeHandle n;
 	
 	//inicjalizacja globalnego planera i jego mapy kosztów
-	tf2_ros::Buffer buffer(ros::Duration(10),true);
-	tf2_ros::TransformListener tf(buffer);	
-	costmap_2d::Costmap2DROS costmap("costmap", buffer);
+	tf2_ros::Buffer								buffer(ros::Duration(10),true);
+	tf2_ros::TransformListener					tf(buffer);
+	costmap_2d::Costmap2DROS					costmap("costmap", buffer);
 	costmap.start();
-	global_planner::GlobalPlanner elektron_global_planner("elektron_global_planner",costmap.getCostmap(),"map");
+	global_planner::GlobalPlanner				elektron_global_planner("elektron_global_planner",costmap.getCostmap(),"map");
 
 	//inicjalizacja lokalnego planera i jego mapy kosztów
-	tf2_ros::Buffer local_buffer(ros::Duration(10),true);
-	tf2_ros::TransformListener local_tf(local_buffer);	
-	costmap_2d::Costmap2DROS local_costmap("local_costmap", local_buffer);
+	tf2_ros::Buffer								local_buffer(ros::Duration(10),true);
+	tf2_ros::TransformListener					local_tf(local_buffer);	
+	costmap_2d::Costmap2DROS					local_costmap("local_costmap", local_buffer);
 	local_costmap.start();
-	base_local_planner::TrajectoryPlannerROS elektron_local_planner;
+	base_local_planner::TrajectoryPlannerROS	elektron_local_planner;
 	elektron_local_planner.initialize("elektron_local_planner",&local_buffer,&local_costmap);
 	
+	//inicjalizacja servisu odbierającego położenie docelowe
 	ros::ServiceServer service = n.advertiseService("set_position", reqHandler);
-	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Twist>("/mux_vel_raw/cmd_vel", 1000);
-
-	ROS_INFO("READY TO GET TARGET POSITION");
+	//inicjalizacja publikowania prędkości do robota
+	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Twist>("/mux_vel_raw/cmd_vel", 500);
+	//inicjalizacja odbierania aktualnej pozycji z odometrii
+	ros::Subscriber odometry_get = n.subscribe("my_topic", 10, getOdomNav); // second arg: buffer size (in tutorial = 1000)
 
 	ros::Rate loop_rate(10);
 
-	isPlanNotComputed = true;
+	ROS_INFO("READY TO GET TARGET POSITION");
 
-	while(ros::ok()){
+	while(ros::ok())
+	{
 		if(isStarted)
 		{
-			if(isPlanNotComputed)
+			if(!isPlanComputed)
 			{
-				elektron_global_planner.makePlan(start,target,plan);
+				elektron_global_planner.makePlan(start, target, plan);
 				elektron_local_planner.setPlan(plan);
-				isPlanNotComputed = false;
+				isPlanComputed = true;
 			}
-			
 			elektron_global_planner.publishPlan(plan);//zeby se zobaczyc sciezke w rviz
-			//isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001,true);
+			//isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001, true);
 			local_costmap.updateMap();
-			elektron_local_planner.computeVelocityCommands(velocities); 
-
-			std:: cout<<velocities<<std::endl;
-			velocity_pub.publish(velocities);
+			elektron_local_planner.computeVelocityCommands(velocities);
 			
-
+			std::cout<<velocities<<std::endl;
+			velocity_pub.publish(velocities);
 		}
 		ros::spinOnce();
 		loop_rate.sleep();
-
 	}
-
 	return 0;
+}
+
+
+geometry_msgs::PoseStamped convertToPoseStamped(double x, double y, double theta)
+{
+	geometry_msgs::PoseStamped result;
+
+	result.header.frame_id = "map";
+	result.header.stamp = ros::Time(0);
+
+	result.pose.position.x = x;
+	result.pose.position.y = y;
+	//msg.pose.position.z = 0;
+
+	KDL::Rotation r1 = KDL::Rotation::RPY(0,0,theta);
+	r1.GetQuaternion
+	(
+		result.pose.orientation.x,
+		result.pose.orientation.y,
+		result.pose.orientation.z,
+		result.pose.orientation.w
+	);
+
+	return result;
 }

@@ -2,14 +2,17 @@
 
 import sys
 import rospy
+import PyKDL
 from geometry_msgs.msg import Pose2D
+from geometry_msgs.msg import PoseStamped
 from stero_mobile_init.srv import Positioning
+from stero_mobile_init.srv import Positioning2
 
 
 def callThaServer(position):
 	rospy.wait_for_service('set_position')
 	try:
-		handler = rospy.ServiceProxy('set_position', Positioning)
+		handler = rospy.ServiceProxy('set_position', Positioning) # or Positioning2
 		response = handler(position)
 		return response.status
 	except rospy.ServiceException, e:
@@ -21,6 +24,23 @@ def countPose2D(x, y, theta):
 	position.x = x
 	position.y = y
 	position.theta = theta
+	return position
+
+
+def countPoseStamped(x, y, theta):
+	position = PoseStamped()
+
+	target.header.frame_id = "map"
+	target.header.stamp = rospy.Time(0) # ???
+
+	target.pose.position.x = x
+	target.pose.position.y = y
+
+	target.pose.orientation.x = qaternion[0]
+	target.pose.orientation.y = qaternion[1]
+	target.pose.orientation.z = qaternion[2]
+	target.pose.orientation.w = qaternion[3]
+
 	return position
 
 
@@ -37,4 +57,4 @@ if __name__ == "__main__":
 		print usage()
 		sys.exit(1)
 	print "Requesting: %s those numbers: %s & %s" %(x, y, theta)
-	print "Response status is: ", callThaServer(countPose2D(x, y, theta))
+	print "Response status is: ", callThaServer(countPose2D(x, y, theta)) # or countPoseStamped(x, y, theta)

@@ -193,7 +193,11 @@ def getOdomNav(data):
 	"""
 	#rospy.loginfo(rospy.get_caller_id() + "I got location: %s", data)
 	if not withLaser :
-		rot = PyKDL.Rotation.Quaternion(data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w)
+		rot = PyKDL.Rotation.Quaternion(
+			data.pose.pose.orientation.x,
+			data.pose.pose.orientation.y,
+			data.pose.pose.orientation.z,
+			data.pose.pose.orientation.w)
 		[roll,pitch,yaw] = rot.GetRot()
 		cuRoPo.theta = round(yaw, 3)
 		cuRoPo.x = round(data.pose.pose.position.x, 3)
