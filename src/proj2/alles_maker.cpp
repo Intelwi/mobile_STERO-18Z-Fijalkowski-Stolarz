@@ -204,12 +204,22 @@ int planExecutor()
 				isPlanComputed = true;
 			}
 			(*elektron_global_planner).publishPlan(plan);//zeby se zobaczyc sciezke w rviz
-			//isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001, true);
+
 			(*local_costmap).updateMap();
-			elektron_local_planner.computeVelocityCommands(velocities);
+			
+			bool isGreat = elektron_local_planner.computeVelocityCommands(velocities); //isGreat mowi nam ze robot wyznaczyl jakos dobra sciezke lokalna
 			
 			std::cout<<velocities<<std::endl;
-			velocity_pub.publish(velocities);
+			
+			if (isGreat) velocity_pub.publish(velocities);
+			else 
+			{
+				velocities.linear.x = 0;
+				velocities.angular.z = 0;
+				velocity_pub.publish(velocities);
+				ROS_ERROR("CANT CALCULATE WAY");
+				return -1;
+			}
 			
 			if(velocities.linear.x == 0 && velocities.angular.z == 0)//czy już skończył jazde
 			{
@@ -221,14 +231,17 @@ int planExecutor()
 					double dx = start.pose.position.x - targX;
 					double dy = start.pose.position.y - targY;
 					double howFar = sqrt(dx*dx + dy*dy);
+					
 					// nie sprawdzamy obrotu
 					// bo trzebaby najpierw z quaternionów na RPY
 					// a potem różnicę sinusów
-					if(howFar < 0.2)
+					if(howFar < 0.25)
 						return 0;
 					else
 						return -1;
 				}
+
+				(*local_costmap).resetLayers();//bo czasem mapa lokalna laguje, to jest zeby ja wyczyscic
 			}
 			else
 				stopCounter = 0;
