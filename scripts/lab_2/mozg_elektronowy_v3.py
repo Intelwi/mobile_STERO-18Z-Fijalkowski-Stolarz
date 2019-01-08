@@ -10,6 +10,7 @@ from geometry_msgs.msg import Pose2D
 from nav_msgs.msg import Odometry
 from decimal import Decimal
 from nav_msgs.srv import *
+from stero_mobile_init.srv import Positioning
 
 PERIOD = 10
 OMEGA = 2*math.pi/PERIOD # pelny obrot na 30s
@@ -118,28 +119,46 @@ def calcToPoint(destination):
 
 ###-------------------------------------v--MESS-HANDLERS--v-------------------------------------###
 
-def pathPointsGetter():
+def pathFollow(plan):
+	for i in range(0,len(plan.plan.poses),4):
+		manager(plan.plan.poses[i].pose.position)
+
+def pathFind(req):
 	rospy.wait_for_service('/global_planner/planner/make_plan')
 	try:
+		print req
+		#start point
 		path_getter = rospy.ServiceProxy('/global_planner/planner/make_plan', GetPlan)
-		pose1 = PoseStamped()
-		pose1.header.stamp = rospy.Time(0)
-		pose1.header.frame_id = "map"
-		pose1.pose.position.x = 0
-		pose1.pose.position.y = 0
-		pose1.pose.position.z = 0
-
-		pose2 = PoseStamped()
-		pose2.header.stamp = rospy.Time(0)
-		pose2.header.frame_id = "map"
-		pose2.pose.position.x = 4
-		pose2.pose.position.y = 0
-		pose2.pose.position.z = 0
+		start = PoseStamped()
+		start.header.stamp = rospy.Time(0)
+		start.header.frame_id = "map"
+		start.pose.position.x = cuRoPo.x
+		start.pose.position.y = cuRoPo.y
+		start.pose.position.z = 0;
 		
-		resp1 = path_getter(pose1, pose2,0.2)
-		print resp1
+		#finish point
+		finish = PoseStamped()
+		finish.header.stamp = rospy.Time(0)
+		finish.header.frame_id = "map"
+		finish.pose.position.x = req.position.x
+		finish.pose.position.y = req.position.y
+		finish.pose.position.z = 0
+		
+		#pobranie planu jazdy
+		plan = path_getter(start, finish,0.2)
+
+		#jesli lista jest pusta
+		if len(plan.plan.poses) == 0:
+			rospy.logwarn("Empty plan calulated.")
+			return -1
+		else:
+			pathFollow(plan)
+			return 0		
+		
 	except rospy.ServiceException, e:
 		print "Service call failed: %s"%e
+		rospy.logerr("Service call failed: %s"%e)
+		return -1
 
 
 def listener():
@@ -150,11 +169,10 @@ def listener():
 	'/pose2D'
 	
 	"""
-	rospy.init_node('listener', anonymous=True)
-	rospy.Subscriber('/chatter', Pose, callback)
+	rospy.init_node('path_following', anonymous=True)
+	rospy.Service('set_position', Positioning, pathFind)
 	rospy.Subscriber('/elektron/mobile_base_controller/odom', Odometry, getOdomNav)
 	print "READY TO DO A JOB"
-	pathPointsGetter()
 
 
 def getOdomNav(data):
@@ -162,15 +180,11 @@ def getOdomNav(data):
 	Odbiera wiadomosci z odometrii - aktualnej pozycji robota
 	
 	"""
-	#rospy.loginfo(rospy.get_caller_id() + "I got location: %s", data)
 	rot = PyKDL.Rotation.Quaternion(data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w)
 	[roll,pitch,yaw] = rot.GetRot()
 	cuRoPo.theta = round(yaw, 3)
 	cuRoPo.x = round(data.pose.pose.position.x, 3)
 	cuRoPo.y = round(data.pose.pose.position.y, 3)
-	#print "theta:", yaw
-	#print "x:", data.pose.pose.position.x
-	#print "y:", data.pose.pose.position.y
 
 
 def callback(data):
@@ -191,24 +205,12 @@ def manager(data):
 	global STATE
 	global working
 	
-	if(data.z == 0):
-		STATE = 0
-		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
-		if(working):
-			print "ZACZYNAM RUCH DO PKT"
-			talkerToPoint()
-			working = False
-			
-	elif(data.z == 1):
-		STATE = 1
-		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
-		if(working):
-			print "ZACZYNAM RUCH DO PKT #ODOM"
-			talkerToPointOdom()
-			working = False
-		
-	else :
-		print "Non-existent mode request"
+	STATE = 1
+	calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
+	if(working):
+		print "ZACZYNAM RUCH DO PKT #ODOM"
+		talkerToPointOdom()
+		working = False
 
 
 ###-------------------------------------v--MESS-BUILDERS--v-------------------------------------###
