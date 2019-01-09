@@ -57,4 +57,21 @@ if __name__ == "__main__":
 		print usage()
 		sys.exit(1)
 	print "Requesting target position: (%s, %s) and orientation: %s rad..." %(x, y, theta)
-	print "Response status is: ", callThaServer(countPose2D(x, y, theta)) # or countPoseStamped(x, y, theta)
+	
+	while True : # Czy da sie otrzymac kilka odpowiedzi?
+		response = callThaServer(countPose2D(x, y, theta)) # or countPoseStamped(x, y, theta)
+		if response == 0 :
+			print "All went good. [%s]" %(response)
+		elif response == -1 :
+			print "Robot failed to reach set postion. [%s]" %(response)
+		elif response == -2 :
+			print "Robot failed to count the way. [%s]" %(response)
+		elif response == -66 :
+			print "Robot is executing other task now. Try again later. [%s]" %(response)
+		elif response == 13 :
+			print "Robot failed but retrying... [%s]" %(response)
+			continue
+		else :
+			print "Unknown response [%s]" %(response)
+			
+		break

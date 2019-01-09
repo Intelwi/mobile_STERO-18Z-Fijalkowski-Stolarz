@@ -12,8 +12,17 @@
 		<rosparam file="$(find stero_mobile_init)/params/proj2/clear_costmap_recovery_params.yaml" command="load" ns="my_clear_costmap_recovery" />
 		<remap from="odom" to="elektron/mobile_base_controller/odom"/>
 		<remap from="cmd_vel" to="/mux_vel_raw/cmd_vel"/>
+		<remap from="scan" to="laser_scan"/>
 	</node>
 	
+	<!--
+	<node pkg="laser_scan_matcher" type="laser_scan_matcher_node" name="laser_scan_matcher_node" output="screen">
+		<param name="use_imu" value="false"/>
+		<param name="publish_tf" value="false"/>
+		<remap from="scan" to="laser_scan"/>
+		<remap from="odom" to="elektron/mobile_base_controller/odom"/>
+	</node>
+	-->
 
 	<node name="footprint" pkg="stero_mobile_init" type="footprint" />
 </launch>

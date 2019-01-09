@@ -27,7 +27,7 @@ obstacles:
       topic: laser_scan
       marking: true
       clearing: true
-      expected_update_rate: 10
+      expected_update_rate: 1
 
 inflation_layer: 
    inflation_radius: 0.31

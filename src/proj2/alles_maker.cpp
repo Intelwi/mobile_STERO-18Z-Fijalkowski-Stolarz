@@ -13,6 +13,7 @@
 #include "tf2_ros/buffer.h"
 #include "stdbool.h"
 #include "tf2_ros/transform_listener.h"
+#include <tf2/utils.h>
 #include <tf/transform_listener.h>
 #include <global_planner/planner_core.h>
 #include <base_local_planner/trajectory_planner_ros.h>
@@ -23,10 +24,18 @@
 #include <clear_costmap_recovery/clear_costmap_recovery.h>
 #include <rotate_recovery/rotate_recovery.h>
 
+#define HZ 10
+#define XX 50
+
 /* Funkcja konwertująca pozycję (x,y,theta) na PoseStamped */
 geometry_msgs::PoseStamped convertToPoseStamped(double, double, double);
 
 int planAndExecute();
+void rotate360();
+double countAverageSpeed(double *);
+void pushNextSpeed(double *, double);
+int whatToDo(int);
+bool openGate = false;
 
 /* Współrzędne celu */
 double targX, targY, targTheta;
@@ -65,13 +74,22 @@ bool reqHandler(stero_mobile_init::Positioning::Request  &req,
 		ROS_INFO("sending back response: [%d]", res.status);
 		return true;
 	}
+	int status;
 	targX = req.position.x;
 	targY = req.position.y;
 	targTheta = req.position.theta;
 	
 	ROS_INFO("I got co-ordinates: (%f, %f) and orientation: %f rad", targX, targY, targTheta);
-
-	res.status = planAndExecute();
+	
+	do {
+		ros::spinOnce(); // odświeżenie odometrii w razie replanningu
+		status = 0;
+		status = planAndExecute();
+		ROS_INFO("Got response: [%d]", status);
+	} while(status == 13);
+	
+	isStarted = false;
+	res.status = status;
 	ROS_INFO("sending back response: [%d]", res.status);
 	
 	return true;
@@ -82,7 +100,7 @@ bool reqHandler(stero_mobile_init::Positioning::Request  &req,
  * Robi to tylko wtedy, gdy robot nie wykonuje zadania */
 void getOdomNav(const nav_msgs::Odometry::ConstPtr&  msg)
 {
-	if(!isStarted)
+	if(!isStarted || openGate)
 	{
 		//std::cout<<"elo from getOdomNav"<<std::endl;
 		start.header.frame_id = "map";
@@ -124,7 +142,7 @@ int main(int argc, char **argv)
 	//inicjalizacja odbierania aktualnej pozycji z odometrii
 	ros::Subscriber odometry_get = n.subscribe("/elektron/mobile_base_controller/odom", 10, getOdomNav); // second arg: buffer size (in tutorial = 1000)
 
-	loop_rate = new ros::Rate(10);
+	loop_rate = new ros::Rate(HZ);
 	
 	ROS_INFO("READY TO GET TARGET POSITION");
 
@@ -141,11 +159,16 @@ costmap_2d::Costmap2DROS *local_costmap;
 
 int planAndExecute()
 {
-	bool isGreat, elo = true;
-	int stopCounter = 0; // licznik zatrzymań
+	isStarted = true;
+	bool isGreat, recoBeha = false;
+	double lastLinearVel = 0, lastAngularVel = 0, averageSpeed = 0;
+	double speeds[XX];
+	int status, stopCounter = 0; // licznik zatrzymań
 	static base_local_planner::TrajectoryPlannerROS elektron_local_planner;
-	static clear_costmap_recovery::ClearCostmapRecovery ccr;
-	static rotate_recovery::RotateRecovery rr;
+	//static clear_costmap_recovery::ClearCostmapRecovery ccr;
+	//static rotate_recovery::RotateRecovery rr;
+	
+	for(int i=0; i<XX; i++) speeds[i] = 100;
 	
 	//inicjalizacja lokalnego planera i jego mapy kosztów
 	if(!localCrewInitiated)
@@ -155,7 +178,7 @@ int planAndExecute()
 		local_costmap = new costmap_2d::Costmap2DROS("local_costmap", *local_buffer);
 		(*local_costmap).start();
 		elektron_local_planner.initialize("elektron_local_planner", local_buffer, local_costmap);
-		
+		/*
 		//inicjalizacja clear_costmap_recovery
 		tf2_ros::Buffer  ccr_buffer(ros::Duration(10),true);
 		tf2_ros::TransformListener  ccr_tf(ccr_buffer);
@@ -165,7 +188,7 @@ int planAndExecute()
 		tf2_ros::Buffer  rr_buffer(ros::Duration(10),true);
 		tf2_ros::TransformListener  rr_tf(rr_buffer);
 		rr.initialize("my_rotate_recovery", &rr_buffer, costmap, local_costmap);
-		
+		*/
 		localCrewInitiated = true;
 	}
 	
@@ -173,32 +196,29 @@ int planAndExecute()
 
 	//punkt docelowy
 	target = convertToPoseStamped(targX, targY, targTheta);
-
-	isStarted = true;
+	
+	// wyliczanie ścieżki przez planer globalny
+	(*elektron_global_planner).makePlan(start, target, plan);
+	elektron_local_planner.setPlan(plan);
 	
 	while(ros::ok())
 	{
 		if(isStarted)
 		{
-			if(!isPlanComputed)
-			{
-				(*elektron_global_planner).makePlan(start, target, plan);
-				elektron_local_planner.setPlan(plan);
-				isPlanComputed = true;
-			}
 			(*elektron_global_planner).publishPlan(plan);//zeby se zobaczyc sciezke w rviz
-
 			(*local_costmap).updateMap();
 			
-			if(elo) // TEST Recovery Behaviors
+			if(recoBeha) // Recovery Behaviors
 			{
-				ccr.runBehavior();
-				rr.runBehavior();
-				elo = false;
+				(*local_costmap).resetLayers();
+				rotate360();
+				//ccr.runBehavior();
+				//rr.runBehavior();
+				recoBeha = false;
 			}
 			
 			isGreat = elektron_local_planner.computeVelocityCommands(velocities); //isGreat mowi nam ze robot wyznaczyl jakos dobra sciezke lokalna
-			std::cout<<velocities<<std::endl;
+			std::cout<<"v_lin: "<<velocities.linear.x<<"  |  v_ang: "<<velocities.angular.z<<std::endl;
 			
 			if(isGreat == false)
 			{
@@ -206,45 +226,156 @@ int planAndExecute()
 				velocities.angular.z = 0;
 				velocity_pub.publish(velocities);
 				ROS_ERROR("CANT CALCULATE WAY");
-				return -1;
+				(*local_costmap).resetLayers();
+				status = whatToDo(-2);
+				if(status != 25) return status;
+				else {recoBeha = true; continue;}
 			}
 			
-			velocity_pub.publish(velocities);
-			
-			if(velocities.linear.x == 0 && velocities.angular.z == 0)//czy już skończył jazde
+			if(velocities.linear.x == 0 && velocities.angular.z == 0) // czy już skończył jazde
 			{
 				if(stopCounter++ == 5) // bo czasem stawał w połowie drogi
 				{
-					isStarted = false;
-					isPlanComputed = false;
 					ros::spinOnce(); // czekamy na aktualizację odometrii
+					(*local_costmap).resetLayers();
 					double dx = start.pose.position.x - targX;
 					double dy = start.pose.position.y - targY;
 					double howFar = sqrt(dx*dx + dy*dy);
-					
+					std::cout<<"Odleglosc od celu: "<<howFar<<std::endl;
 					// nie sprawdzamy obrotu
 					// bo trzebaby najpierw z quaternionów na RPY
 					// a potem różnicę sinusów
-					if(howFar < 0.25)
+					if(howFar < 0.3)
 						return 0;
 					else
-					{
-						ccr.runBehavior();
 						return -1;
-					}
 				}
-
-				(*local_costmap).resetLayers();//bo czasem mapa lokalna laguje, to jest zeby ja wyczyscic
 			}
 			else
 				stopCounter = 0;
+			
+			averageSpeed = countAverageSpeed(speeds);
+			std::cout<<"Average speed: "<<averageSpeed<<std::endl;
+			
+			if(lastAngularVel*velocities.angular.z < -0.1 || averageSpeed <= 0.1) // jak odwala coś dziwnego
+			{
+				openGate = true;
+				velocities.linear.x = 0;
+				velocities.angular.z = 0;
+				velocity_pub.publish(velocities);
+				velocity_pub.publish(velocities);
+				(*local_costmap).resetLayers();
+				status = whatToDo(-8);
+				if(status != 25) return status;
+				else {recoBeha = true; continue;}
+			}
+			
+			velocity_pub.publish(velocities); // Publikujemy otrzymane prędkości
+			
+			lastLinearVel = velocities.linear.x;
+			lastAngularVel = velocities.angular.z;
+			pushNextSpeed(speeds, lastLinearVel);
 		}
 		ros::spinOnce();
 		(*loop_rate).sleep();
 	}
-	return 0;
+	return -100;
 }
 
+
+int whatToDo(int status)
+{
+	std::string whatToDo = "";
+	std::cout<<"Co robić?:\n\
+				[r] Recalculate path\n\
+				[b] recovery Behaviour\n\
+				[s] Stop this sh..";
+	std::cin>>whatToDo;
+	if(whatToDo == "r")
+		return 13;
+	else if(whatToDo == "b")
+		return 25;
+	else if(whatToDo == "s")
+		return status;
+	else
+	{
+		std::cout<<"Nie ma takiego numeru."<<std::endl;
+		return -127;
+	}
+}
+
+
+void rotate360()
+{
+	int i = 0;
+	KDL::Rotation r1;
+	geometry_msgs::Twist vel_msg;
+	vel_msg.linear.x = 0;
+	vel_msg.linear.y = 0;
+	vel_msg.angular.x = 0;
+	vel_msg.angular.y = 0;
+	vel_msg.angular.z = 0.5;
+	
+	openGate = true;
+	ros::spinOnce(); // czekamy na aktualizację odometrii
+	
+	double yaw = tf2::getYaw(start.pose.orientation);
+	std::cout<<"Oto yaw: "<<yaw<<std::endl;
+	
+	// Obrot odjezdzajacy od 0
+	while(i <= 2*HZ)
+	{
+		velocity_pub.publish(vel_msg);
+		ros::spinOnce();
+		std::cout<<"Oto kat: "<<tf2::getYaw(start.pose.orientation)<<std::endl;
+		i++;
+		(*loop_rate).sleep();
+	}
+	
+	// Obrot dojezdzajacy do 360
+	while(abs(tf2::getYaw(start.pose.orientation) - yaw) > 0.07)
+	{
+		velocity_pub.publish(vel_msg);
+		ros::spinOnce();
+		std::cout<<"Oto kat: "<<tf2::getYaw(start.pose.orientation)<<std::endl;
+		(*loop_rate).sleep();
+	}
+	
+	// Zatrzymanie robota
+	vel_msg.angular.z = 0;
+	while(i <= HZ)
+	{
+		velocity_pub.publish(vel_msg);
+		i++;
+		(*loop_rate).sleep();
+	}
+	
+	openGate = false;
+}
+
+
+double countAverageSpeed(double *speeds)
+{
+	double sum = 0;
+	int i = 0;
+	while(i < XX)
+	{
+		//std::cout<<*speeds<<" ";
+		if(*speeds == 100) return 1;
+		sum += *speeds;
+		speeds++;
+		i++;
+	}
+	return sum/XX;
+}
+
+void pushNextSpeed(double *speeds, double nextSpeed)
+{
+	static int i = 0;
+	//std::cout<<i<<std::endl;
+	if(i == XX) i = 0;
+	speeds[i++] = nextSpeed;
+}
 
 geometry_msgs::PoseStamped convertToPoseStamped(double x, double y, double theta)
 {
