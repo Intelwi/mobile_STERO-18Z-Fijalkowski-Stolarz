@@ -63,11 +63,15 @@ if __name__ == "__main__":
 		if response == 0 :
 			print "All went good. [%s]" %(response)
 		elif response == -1 :
-			print "Robot failed to reach set postion. [%s]" %(response)
+			print "Robot failed to reach the set postion. [%s]" %(response)
 		elif response == -2 :
 			print "Robot failed to count the way. [%s]" %(response)
+		elif response == -8 :
+			print "Operator has stopped this sh.. [%s]" %(response)
 		elif response == -66 :
 			print "Robot is executing other task now. Try again later. [%s]" %(response)
+		elif response == -127 :
+			print "Operator pierdola cos zle kliknal... [%s]" %(response)
 		elif response == 13 :
 			print "Robot failed but retrying... [%s]" %(response)
 			continue
