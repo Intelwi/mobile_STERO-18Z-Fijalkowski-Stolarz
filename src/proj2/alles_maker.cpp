@@ -190,12 +190,12 @@ int planAndExecute()
 
 			(*local_costmap).updateMap();
 			
-			if(elo) // TEST Recovery Behaviors
-			{
-				ccr.runBehavior();
-				rr.runBehavior();
-				elo = false;
-			}
+			//if(elo) // TEST Recovery Behaviors
+			//{
+			//	ccr.runBehavior();
+			//	rr.runBehavior();
+			//	elo = false;
+			//}
 			
 			isGreat = elektron_local_planner.computeVelocityCommands(velocities); //isGreat mowi nam ze robot wyznaczyl jakos dobra sciezke lokalna
 			std::cout<<velocities<<std::endl;
@@ -234,7 +234,7 @@ int planAndExecute()
 					}
 				}
 
-				(*local_costmap).resetLayers();//bo czasem mapa lokalna laguje, to jest zeby ja wyczyscic
+				//(*local_costmap).resetLayers();//bo czasem mapa lokalna laguje, to jest zeby ja wyczyscic
 			}
 			else
 				stopCounter = 0;

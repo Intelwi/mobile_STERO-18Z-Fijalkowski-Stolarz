@@ -1,0 +1,6 @@
+sim_granularity: 0.017
+frequency: 10
+TrajectoryPlannerROS/yaw_goal_tolerance: 0.05
+TrajectoryPlannerROS/acc_lim_th: 3.2
+TrajectoryPlannerROS/max_rotational_vel: 1.0
+TrajectoryPlannerROS/min_in_place_rotational_vel: 0.4
