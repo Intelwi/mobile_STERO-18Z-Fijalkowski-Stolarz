@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
 	global_planner
 	kdl_conversions
 	base_local_planner
+	clear_costmap_recovery
+	rotate_recovery
 )
 
 add_message_files(
@@ -56,6 +58,7 @@ target_link_libraries(footprint ${catkin_LIBRARIES})
 
 add_executable(alles_maker src/proj2/alles_maker.cpp)
 target_link_libraries(alles_maker ${catkin_LIBRARIES})
+
 
 install (DIRECTORY worlds/ DESTINATION share/${CMAKE_PROJECT_NAME}/worlds 
          FILES_MATCHING PATTERN "*.world")

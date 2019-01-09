@@ -13,16 +13,20 @@
 #include "tf2_ros/buffer.h"
 #include "stdbool.h"
 #include "tf2_ros/transform_listener.h"
+#include <tf/transform_listener.h>
 #include <global_planner/planner_core.h>
 #include <base_local_planner/trajectory_planner_ros.h>
 #include <kdl/frames.hpp>
 #include <kdl/frames_io.hpp>
 #include <vector>
+#include <nav_core/recovery_behavior.h>
+#include <clear_costmap_recovery/clear_costmap_recovery.h>
+#include <rotate_recovery/rotate_recovery.h>
 
 /* Funkcja konwertująca pozycję (x,y,theta) na PoseStamped */
 geometry_msgs::PoseStamped convertToPoseStamped(double, double, double);
 
-int planExecutor();
+int planAndExecute();
 
 /* Współrzędne celu */
 double targX, targY, targTheta;
@@ -67,7 +71,7 @@ bool reqHandler(stero_mobile_init::Positioning::Request  &req,
 	
 	ROS_INFO("I got co-ordinates: (%f, %f) and orientation: %f rad", targX, targY, targTheta);
 
-	res.status = planExecutor();
+	res.status = planAndExecute();
 	ROS_INFO("sending back response: [%d]", res.status);
 	
 	return true;
@@ -80,7 +84,7 @@ void getOdomNav(const nav_msgs::Odometry::ConstPtr&  msg)
 {
 	if(!isStarted)
 	{
-		std::cout<<"elo from getOdomNav"<<std::endl;
+		//std::cout<<"elo from getOdomNav"<<std::endl;
 		start.header.frame_id = "map";
 		start.header.stamp = ros::Time(0);
 
@@ -94,7 +98,7 @@ void getOdomNav(const nav_msgs::Odometry::ConstPtr&  msg)
 	}
 }
 
-
+costmap_2d::Costmap2DROS *costmap;
 global_planner::GlobalPlanner *elektron_global_planner;
 
 ros::Rate *loop_rate;
@@ -109,18 +113,10 @@ int main(int argc, char **argv)
 	//inicjalizacja globalnego planera i jego mapy kosztów
 	tf2_ros::Buffer  buffer(ros::Duration(10),true);
 	tf2_ros::TransformListener  tf(buffer);
-	costmap_2d::Costmap2DROS  costmap("costmap", buffer);
-	costmap.start();
-	elektron_global_planner = new global_planner::GlobalPlanner("elektron_global_planner",costmap.getCostmap(),"map");
+	costmap = new costmap_2d::Costmap2DROS("costmap", buffer);
+	(*costmap).start();
+	elektron_global_planner = new global_planner::GlobalPlanner("elektron_global_planner",(*costmap).getCostmap(),"map");
 
-	//inicjalizacja lokalnego planera i jego mapy kosztów
-	/*local_buffer = new tf2_ros::Buffer(ros::Duration(10),true);
-	local_tf = new tf2_ros::TransformListener(*local_buffer);
-	local_costmap = new costmap_2d::Costmap2DROS("local_costmap", *local_buffer);
-	(*local_costmap).start();
-	base_local_planner::TrajectoryPlannerROS elektron_local_planner;
-	elektron_local_planner.initialize("elektron_local_planner",local_buffer,local_costmap);*/
-	
 	//inicjalizacja servisu odbierającego położenie docelowe
 	ros::ServiceServer service = n.advertiseService("set_position", reqHandler);
 	//inicjalizacja publikowania prędkości do robota
@@ -132,33 +128,6 @@ int main(int argc, char **argv)
 	
 	ROS_INFO("READY TO GET TARGET POSITION");
 
-	/*while(ros::ok())
-	{
-		if(isStarted)
-		{
-			if(!isPlanComputed)
-			{
-				(*elektron_global_planner).makePlan(start, target, plan);
-				elektron_local_planner.setPlan(plan);
-				isPlanComputed = true;
-			}
-			(*elektron_global_planner).publishPlan(plan);//zeby se zobaczyc sciezke w rviz
-			//isTrajectoryComputed = elektron_local_planner.checkTrajectory(0.01, 0.01, 0.001, true);
-			(*local_costmap).updateMap();
-			elektron_local_planner.computeVelocityCommands(velocities);
-			
-			std::cout<<velocities<<std::endl;
-			velocity_pub.publish(velocities);
-			
-			/*if(velocities.linear.x == 0 && velocities.angular.z == 0)
-			{
-				isStarted = false;
-				isPlanComputed = false;
-			}
-		}
-		ros::spinOnce();
-		(*loop_rate).sleep();
-	}*/
 	ros::spin();
 	return 0;
 }
@@ -170,10 +139,13 @@ tf2_ros::TransformListener *local_tf;
 tf2_ros::Buffer *local_buffer;
 costmap_2d::Costmap2DROS *local_costmap;
 
-int planExecutor()
+int planAndExecute()
 {
+	bool isGreat, elo = true;
 	int stopCounter = 0; // licznik zatrzymań
 	static base_local_planner::TrajectoryPlannerROS elektron_local_planner;
+	static clear_costmap_recovery::ClearCostmapRecovery ccr;
+	static rotate_recovery::RotateRecovery rr;
 	
 	//inicjalizacja lokalnego planera i jego mapy kosztów
 	if(!localCrewInitiated)
@@ -183,6 +155,17 @@ int planExecutor()
 		local_costmap = new costmap_2d::Costmap2DROS("local_costmap", *local_buffer);
 		(*local_costmap).start();
 		elektron_local_planner.initialize("elektron_local_planner", local_buffer, local_costmap);
+		
+		//inicjalizacja clear_costmap_recovery
+		tf2_ros::Buffer  ccr_buffer(ros::Duration(10),true);
+		tf2_ros::TransformListener  ccr_tf(ccr_buffer);
+		ccr.initialize("my_clear_costmap_recovery", &ccr_buffer, costmap, local_costmap);
+		
+		//inicjalizacja rotate_recovery
+		tf2_ros::Buffer  rr_buffer(ros::Duration(10),true);
+		tf2_ros::TransformListener  rr_tf(rr_buffer);
+		rr.initialize("my_rotate_recovery", &rr_buffer, costmap, local_costmap);
+		
 		localCrewInitiated = true;
 	}
 	
@@ -207,12 +190,17 @@ int planExecutor()
 
 			(*local_costmap).updateMap();
 			
-			bool isGreat = elektron_local_planner.computeVelocityCommands(velocities); //isGreat mowi nam ze robot wyznaczyl jakos dobra sciezke lokalna
+			if(elo) // TEST Recovery Behaviors
+			{
+				ccr.runBehavior();
+				rr.runBehavior();
+				elo = false;
+			}
 			
+			isGreat = elektron_local_planner.computeVelocityCommands(velocities); //isGreat mowi nam ze robot wyznaczyl jakos dobra sciezke lokalna
 			std::cout<<velocities<<std::endl;
 			
-			if (isGreat) velocity_pub.publish(velocities);
-			else 
+			if(isGreat == false)
 			{
 				velocities.linear.x = 0;
 				velocities.angular.z = 0;
@@ -220,6 +208,8 @@ int planExecutor()
 				ROS_ERROR("CANT CALCULATE WAY");
 				return -1;
 			}
+			
+			velocity_pub.publish(velocities);
 			
 			if(velocities.linear.x == 0 && velocities.angular.z == 0)//czy już skończył jazde
 			{
@@ -238,7 +228,10 @@ int planExecutor()
 					if(howFar < 0.25)
 						return 0;
 					else
+					{
+						ccr.runBehavior();
 						return -1;
+					}
 				}
 
 				(*local_costmap).resetLayers();//bo czasem mapa lokalna laguje, to jest zeby ja wyczyscic
