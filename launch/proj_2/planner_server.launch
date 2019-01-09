@@ -10,6 +10,7 @@
 		<rosparam file="$(find stero_mobile_init)/params/proj2/global_planner_params.yaml" command="load" ns="elektron_global_planner" />
 		<rosparam file="$(find stero_mobile_init)/params/proj2/local_planner_params.yaml" command="load" ns="elektron_local_planner" />
 		<rosparam file="$(find stero_mobile_init)/params/proj2/clear_costmap_recovery_params.yaml" command="load" ns="my_clear_costmap_recovery" />
+		<rosparam file="$(find stero_mobile_init)/params/proj2/rotate_recovery_params.yaml" command="load" ns="my_rotate_recovery" />
 		<remap from="odom" to="elektron/mobile_base_controller/odom"/>
 		<remap from="cmd_vel" to="/mux_vel_raw/cmd_vel"/>
 		<remap from="scan" to="laser_scan"/>

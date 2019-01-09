@@ -17,4 +17,4 @@ vtheta_samples: 20
 heading_lookahead: 3
 pdist_scale: 1
 gdist_scale: 1
-occdist_scale: 0.01 #jak bardzo robot ma starac sie unikac przeszkody, jak to jest małe (np 0.01 (domyślne)) to robot przejedzie przez np waskie drzwi, a jak duże to nie przejedzie (np 2)
+occdist_scale: 0.05 #jak bardzo robot ma starac sie unikac przeszkody, jak to jest małe (np 0.01 (domyślne)) to robot przejedzie przez np waskie drzwi, a jak duże to nie przejedzie (np 2)
