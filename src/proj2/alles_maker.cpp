@@ -31,10 +31,12 @@
 geometry_msgs::PoseStamped convertToPoseStamped(double, double, double);
 
 int planAndExecute();
-void rotate360();
+int whatToDo(int);
+void rotate360(int);
 double countAverageSpeed(double *);
 void pushNextSpeed(double *, double);
-int whatToDo(int);
+void cleanSpeeds(double *);
+
 bool openGate = false;
 
 /* Współrzędne celu */
@@ -161,14 +163,14 @@ int planAndExecute()
 {
 	isStarted = true;
 	bool isGreat, recoBeha = false;
-	double lastLinearVel = 0, lastAngularVel = 0, averageSpeed = 0;
+	double dx, dy, howFar, lastLinearVel = 0, lastAngularVel = 0, averageSpeed = 0;
 	double speeds[XX];
 	int status, stopCounter = 0; // licznik zatrzymań
 	static base_local_planner::TrajectoryPlannerROS elektron_local_planner;
-	//static clear_costmap_recovery::ClearCostmapRecovery ccr;
+	static clear_costmap_recovery::ClearCostmapRecovery ccr;
 	//static rotate_recovery::RotateRecovery rr;
 	
-	for(int i=0; i<XX; i++) speeds[i] = 100;
+	cleanSpeeds(speeds);
 	
 	//inicjalizacja lokalnego planera i jego mapy kosztów
 	if(!localCrewInitiated)
@@ -178,12 +180,12 @@ int planAndExecute()
 		local_costmap = new costmap_2d::Costmap2DROS("local_costmap", *local_buffer);
 		(*local_costmap).start();
 		elektron_local_planner.initialize("elektron_local_planner", local_buffer, local_costmap);
-		/*
+		
 		//inicjalizacja clear_costmap_recovery
 		tf2_ros::Buffer  ccr_buffer(ros::Duration(10),true);
 		tf2_ros::TransformListener  ccr_tf(ccr_buffer);
 		ccr.initialize("my_clear_costmap_recovery", &ccr_buffer, costmap, local_costmap);
-		
+		/*
 		//inicjalizacja rotate_recovery
 		tf2_ros::Buffer  rr_buffer(ros::Duration(10),true);
 		tf2_ros::TransformListener  rr_tf(rr_buffer);
@@ -210,10 +212,13 @@ int planAndExecute()
 			
 			if(recoBeha) // Recovery Behaviors
 			{
-				(*local_costmap).resetLayers();
-				rotate360();
-				//ccr.runBehavior();
+				ccr.runBehavior();
 				//rr.runBehavior();
+				//(*local_costmap).resetLayers();
+				rotate360(status);
+				lastLinearVel = 0;
+				lastAngularVel = 0;
+				cleanSpeeds(speeds);
 				recoBeha = false;
 			}
 			
@@ -228,19 +233,24 @@ int planAndExecute()
 				ROS_ERROR("CANT CALCULATE WAY");
 				(*local_costmap).resetLayers();
 				status = whatToDo(-2);
-				if(status != 25) return status;
-				else {recoBeha = true; continue;}
+				if(status != 360 && status != 180) return status;
+				else
+				{
+					recoBeha = true;
+					continue;
+				}
 			}
 			
-			if(velocities.linear.x == 0 && velocities.angular.z == 0) // czy już skończył jazde
+			if(velocities.linear.x == 0 && velocities.angular.z == 0) // jak się zatrzymał
 			{
 				if(stopCounter++ == 5) // bo czasem stawał w połowie drogi
 				{
+					openGate = true;
 					ros::spinOnce(); // czekamy na aktualizację odometrii
 					(*local_costmap).resetLayers();
-					double dx = start.pose.position.x - targX;
-					double dy = start.pose.position.y - targY;
-					double howFar = sqrt(dx*dx + dy*dy);
+					dx = start.pose.position.x - targX;
+					dy = start.pose.position.y - targY;
+					howFar = sqrt(dx*dx + dy*dy);
 					std::cout<<"Odleglosc od celu: "<<howFar<<std::endl;
 					// nie sprawdzamy obrotu
 					// bo trzebaby najpierw z quaternionów na RPY
@@ -257,7 +267,32 @@ int planAndExecute()
 			averageSpeed = countAverageSpeed(speeds);
 			std::cout<<"Average speed: "<<averageSpeed<<std::endl;
 			
-			if(lastAngularVel*velocities.angular.z < -0.1 || averageSpeed <= 0.1) // jak odwala coś dziwnego
+			if(averageSpeed <= 0.1) // jak ostatnio wolno jedzie
+			{
+				openGate = true;
+				ros::spinOnce(); // czekamy na aktualizację odometrii
+				dx = start.pose.position.x - targX;
+				dy = start.pose.position.y - targY;
+				howFar = sqrt(dx*dx + dy*dy);
+				std::cout<<"Odleglosc od celu: "<<howFar<<std::endl;
+				if(howFar < 1) pushNextSpeed(speeds, 100);
+				else
+				{
+					velocities.linear.x = 0;
+					velocities.angular.z = 0;
+					velocity_pub.publish(velocities);
+					velocity_pub.publish(velocities);
+					(*local_costmap).resetLayers();
+					status = whatToDo(-8);
+					if(status != 360 && status != 180) return status;
+					else
+					{
+						recoBeha = true;
+						continue;
+					}
+				}
+			}
+			/*if(lastAngularVel*velocities.angular.z < -0.1) // jak podejżanie zmienia kierunek obrotu
 			{
 				openGate = true;
 				velocities.linear.x = 0;
@@ -268,7 +303,7 @@ int planAndExecute()
 				status = whatToDo(-8);
 				if(status != 25) return status;
 				else {recoBeha = true; continue;}
-			}
+			}*/
 			
 			velocity_pub.publish(velocities); // Publikujemy otrzymane prędkości
 			
@@ -287,14 +322,17 @@ int whatToDo(int status)
 {
 	std::string whatToDo = "";
 	std::cout<<"Co robić?:\n\
-				[r] Recalculate path\n\
-				[b] recovery Behaviour\n\
-				[s] Stop this sh..";
+		[r] Recalculate path\n\
+		[f] recovery Behaviour: full turn\n\
+		[h] recovery Behaviour: half turn\n\
+		[s] Stop this sh..	";
 	std::cin>>whatToDo;
 	if(whatToDo == "r")
 		return 13;
-	else if(whatToDo == "b")
-		return 25;
+	else if(whatToDo == "f")
+		return 360;
+	else if(whatToDo == "h")
+		return 180;
 	else if(whatToDo == "s")
 		return status;
 	else
@@ -305,7 +343,7 @@ int whatToDo(int status)
 }
 
 
-void rotate360()
+void rotate360(int stopnie)
 {
 	int i = 0;
 	KDL::Rotation r1;
@@ -323,7 +361,7 @@ void rotate360()
 	std::cout<<"Oto yaw: "<<yaw<<std::endl;
 	
 	// Obrot odjezdzajacy od 0
-	while(i <= 2*HZ)
+	while(i <= HZ)
 	{
 		velocity_pub.publish(vel_msg);
 		ros::spinOnce();
@@ -332,14 +370,34 @@ void rotate360()
 		(*loop_rate).sleep();
 	}
 	
-	// Obrot dojezdzajacy do 360
-	while(abs(tf2::getYaw(start.pose.orientation) - yaw) > 0.07)
+	if(stopnie == 360)
 	{
-		velocity_pub.publish(vel_msg);
-		ros::spinOnce();
-		std::cout<<"Oto kat: "<<tf2::getYaw(start.pose.orientation)<<std::endl;
-		(*loop_rate).sleep();
+		// Obrot dojezdzajacy do 360
+		while(abs(tf2::getYaw(start.pose.orientation) - yaw) > 0.07)
+		{
+			velocity_pub.publish(vel_msg);
+			ros::spinOnce();
+			std::cout<<"Oto kat: "<<tf2::getYaw(start.pose.orientation)<<std::endl;
+			(*loop_rate).sleep();
+		}
 	}
+	else if (stopnie == 180)
+	{
+		if(yaw != 0)
+			yaw = (abs(yaw)-3.14)*(abs(yaw)/yaw);
+		else
+			yaw = 3.13;
+		// Obrot dojezdzajacy do 180
+		while(abs(tf2::getYaw(start.pose.orientation) - yaw) > 0.07)
+		{
+			velocity_pub.publish(vel_msg);
+			ros::spinOnce();
+			std::cout<<"Oto kat: "<<tf2::getYaw(start.pose.orientation)<<std::endl;
+			(*loop_rate).sleep();
+		}
+	}
+	else
+		std::cout<<"Not implemented dagree turn."<<std::endl;
 	
 	// Zatrzymanie robota
 	vel_msg.angular.z = 0;
@@ -353,6 +411,11 @@ void rotate360()
 	openGate = false;
 }
 
+//-----------------------------------------------------------------------SPEEDS
+void cleanSpeeds(double *speeds)
+{
+	for(int i=0; i<XX; i++) speeds[i] = 100;
+}
 
 double countAverageSpeed(double *speeds)
 {
@@ -376,6 +439,7 @@ void pushNextSpeed(double *speeds, double nextSpeed)
 	if(i == XX) i = 0;
 	speeds[i++] = nextSpeed;
 }
+//-----------------------------------------------------------------------^^^^^
 
 geometry_msgs::PoseStamped convertToPoseStamped(double x, double y, double theta)
 {
