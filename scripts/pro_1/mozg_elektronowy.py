@@ -246,81 +246,24 @@ def manager(data):
 			working = False
 			
 	elif(data.z == 1):
+		if(STATE == 1): return # nie rob tego testu drugi raz z rzedu
 		STATE = 1
-		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
-		if(working):
-			print "ZACZYNAM RUCH DO PKT #ODOM"
-			talkerToPointOdom()
-			working = False
-			
-	elif(data.z == 2):
-		if(STATE == 2): return # nie rob tego testu drugi raz z rzedu
-		STATE = 2
-		working = True
-		print "ZACZYNAM TEST ~PRZOD TYL~ #ODOM"
-		talkerToSlideOdom()
-		working = False
-			
-	elif(data.z == 3):
-		if(STATE == 3): return # nie rob tego testu drugi raz z rzedu
-		STATE = 3
-		working = True
-		print "ZACZYNAM TEST ~OBROT~ #ODOM"
-		talkerToTwistOdom()
-		working = False
-		
-	elif(data.z == 4):
-		if(STATE == 4): return # nie rob tego testu drugi raz z rzedu
-		STATE = 4
-		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
-		if(working):
-			print "ZACZYNAM TEST ~RUCH PO KWADRACIE~ #ODOM"
-			talkerToPointOdom()
-			for i in range(3):
-				nextPoint = calcNextSquarePoint()
-				calcToPoint(nextPoint)
-				talkerToPointOdom()
-			working = False
-			
-	elif(data.z == 5):
-		if(STATE == 5): return # nie rob tego testu drugi raz z rzedu
-		STATE = 5
-		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
-		if(working):
-			print "ZACZYNAM TEST ~RUCH PO KWADRACIE v2~ #ODOM"
-			[sqPnt2, sqPnt3, sqPnt4] = calcAllSquarePoints()
-			talkerToPointOdom()
-			
-			calcToPoint(sqPnt2)
-			talkerToPointOdom()
-			
-			calcToPoint(sqPnt3)
-			talkerToPointOdom()
-			
-			calcToPoint(sqPnt4)
-			talkerToPointOdom()
-			
-			working = False
-			
-	elif(data.z == 6):
-		if(STATE == 6): return # nie rob tego testu drugi raz z rzedu
-		STATE = 6
 		working = True
 		print "ZACZYNAM TEST ~PRZOD TYL~"
 		talkerToSlide()
 		working = False
 			
-	elif(data.z == 7):
-		if(STATE == 7): return # nie rob tego testu drugi raz z rzedu
-		STATE = 7
+	elif(data.z == 2):
+		if(STATE == 2): return # nie rob tego testu drugi raz z rzedu
+		STATE = 2
 		working = True
 		print "ZACZYNAM TEST ~OBROT~"
 		talkerToTwist()
 		working = False
 		
-	elif(data.z == 8):
-		if(STATE == 8): return # nie rob tego testu drugi raz z rzedu
-		STATE = 8
+	elif(data.z == 3):
+		if(STATE == 3): return # nie rob tego testu drugi raz z rzedu
+		STATE = 3
 		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
 		if(working):
 			print "ZACZYNAM TEST ~RUCH PO KWADRACIE v2~"
@@ -335,6 +278,63 @@ def manager(data):
 			
 			calcToPoint(sqPnt4)
 			talkerToPoint()
+			
+			working = False
+
+	elif(data.z == 4):
+		STATE = 4
+		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
+		if(working):
+			print "ZACZYNAM RUCH DO PKT #ODOM"
+			talkerToPointOdom()
+			working = False
+			
+	elif(data.z == 5):
+		if(STATE == 5): return # nie rob tego testu drugi raz z rzedu
+		STATE = 5
+		working = True
+		print "ZACZYNAM TEST ~PRZOD TYL~ #ODOM"
+		talkerToSlideOdom()
+		working = False
+			
+	elif(data.z == 6):
+		if(STATE == 6): return # nie rob tego testu drugi raz z rzedu
+		STATE = 6
+		working = True
+		print "ZACZYNAM TEST ~OBROT~ #ODOM"
+		talkerToTwistOdom()
+		working = False
+		
+	elif(data.z == 7):
+		if(STATE == 7): return # nie rob tego testu drugi raz z rzedu
+		STATE = 7
+		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
+		if(working):
+			print "ZACZYNAM TEST ~RUCH PO KWADRACIE~ #ODOM"
+			talkerToPointOdom()
+			for i in range(3):
+				nextPoint = calcNextSquarePoint()
+				calcToPoint(nextPoint)
+				talkerToPointOdom()
+			working = False
+			
+	elif(data.z == 8):
+		if(STATE == 8): return # nie rob tego testu drugi raz z rzedu
+		STATE = 8
+		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
+		if(working):
+			print "ZACZYNAM TEST ~RUCH PO KWADRACIE v2~ #ODOM"
+			[sqPnt2, sqPnt3, sqPnt4] = calcAllSquarePoints()
+			talkerToPointOdom()
+			
+			calcToPoint(sqPnt2)
+			talkerToPointOdom()
+			
+			calcToPoint(sqPnt3)
+			talkerToPointOdom()
+			
+			calcToPoint(sqPnt4)
+			talkerToPointOdom()
 			
 			working = False
 		

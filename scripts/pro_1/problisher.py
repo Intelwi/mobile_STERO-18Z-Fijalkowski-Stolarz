@@ -11,7 +11,7 @@ overRange = False
 def usage(argNum):
 	if (argNum == 2 and sys.argv[1] == "help") or overRange :
 		print "Avaliable modes: "
-		for i in range(6) :
+		for i in range(9) :
 			print " %s - %s" %(i, modeDesc(i))
 		return
 	
@@ -32,17 +32,23 @@ def modeDesc(mode):
 		y = "y"
 	
 	if mode == 0 :
-		return "move to position (%s, %s) without feedback correction" %(x,y)
+		return "move to position (%s, %s) [with time control]" %(x,y)
 	elif mode == 1 :
-		return "move to position (%s, %s) with feedback correction" %(x,y)
+		return "go there and back [with time control]"
 	elif mode == 2 :
-		return "go there and back"
+		return "rotate in place about 360 dagrees [with time control]"
 	elif mode == 3 :
-		return "rotate in place about 360 dagrees"
+		return "go square, first corner in position (%s, %s) -> pre-counting\n     [with time control]" %(x,y)
 	elif mode == 4 :
-		return "go square, first corner in position (%s, %s)" %(x,y)
+		return "move to position (%s, %s) [with feedback correction]" %(x,y)
 	elif mode == 5 :
-		return "go square, first corner in position (%s, %s) -> pre-counting" %(x,y)
+		return "go there and back [with feedback correction]"
+	elif mode == 6 :
+		return "rotate in place about 360 dagrees [with feedback correction]"
+	elif mode == 7 :
+		return "go square, first corner in position (%s, %s)\n     [with feedback correction]" %(x,y)
+	elif mode == 8 :
+		return "go square, first corner in position (%s, %s) -> pre-counting\n     [with feedback correction]" %(x,y)
 	else :
 		return "DESCRIPTION NOT AVALIABLE YET"
 
