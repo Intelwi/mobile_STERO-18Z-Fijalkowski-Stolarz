@@ -122,11 +122,15 @@ def calcToPoint(destination):
 def pathFollow(plan):
 	for i in range(0,len(plan.plan.poses),4):
 		manager(plan.plan.poses[i].pose.position)
+	talkerToTwistOdom()
+
 
 def pathFind(req):
+	global setTheta
 	rospy.wait_for_service('/global_planner/planner/make_plan')
 	try:
 		print req
+		setTheta = req.position.theta
 		#start point
 		path_getter = rospy.ServiceProxy('/global_planner/planner/make_plan', GetPlan)
 		start = PoseStamped()
@@ -376,6 +380,45 @@ def talkerToPointOdom():
 	print "	dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
 	print "\n"
 
+
+def talkerToTwistOdom():
+	"""
+	Publikuje polecenia do robota,
+	majace na celu jego obrocenie sie w miejscu o 360 stopni
+	uwzglednia odometrie
+	
+	Parameters ?
+	----------
+	setRoPo : Position()
+		pozycja zadana dla robota
+	
+	"""
+	print "talkerToTwistOdom STARTED"
+	pub = rospy.Publisher('/mux_vel_nav/cmd_vel', Twist, queue_size=10) # TOPIC: /mux_vel_nav/cmd_vel
+	rate = rospy.Rate(HZ)
+	
+	message = buildMess(False, True, lefty*2-1) # obrot w lewo gdy lewo==True
+	
+	""" Obrot dojezdzajacy do setTheta """
+	while abs(cuRoPo.theta - setTheta) >= 0.07 :
+		pub.publish(message)
+		print "\rdest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f'),
+		sys.stdout.flush()
+		rate.sleep()
+	
+	""" Zatrzymanie robota """
+	message = buildMess(False, False, 0)
+	i=0
+	while i <= HZ :
+		pub.publish(message)
+		i=i+1
+		rate.sleep()
+		
+	print "\ntalkerToTwistOdom FINISHED with:"
+	print "	dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
+	print "	dest x: ", format(setRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
+	print "	dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
+	print "\n"
 
 ###------------------------------------------v--MAIN--v------------------------------------------###
 
