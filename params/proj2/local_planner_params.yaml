@@ -1,20 +1,20 @@
-acc_lim_x: 1.5
-acc_lim_y: 0
-acc_lim_theta: 2.8
-max_vel_x: 0.4
-min_vel_x: 0.1
-max_vel_theta: 0.6
-min_vel_theta: -0.6
-min_in_place_vel_theta: 0.25
-holonomic_robot: false
-yaw_goal_tolerance: 0.25
-xy_goal_tolerance: 0.25 #0.15 nope
+acc_lim_x: 1.5 #limit przyspieszenia robota w osi x
+acc_lim_y: 0 #limit przyspieszenia robota w osi y
+acc_lim_theta: 2.8 #limit przyspieszenia katowego robota
+max_vel_x: 0.4 #maksymalna predkosc liniowa w osi x
+min_vel_x: 0.1 #minimalna predkosc liniowa w osi x
+max_vel_theta: 0.6 #maksymalna predkosc katowa
+min_vel_theta: -0.6 #minimalna predkosc katowa
+min_in_place_vel_theta: 0.25 #minimlana predkosc obrotowa robota gdy obraca sie w miejscu
+holonomic_robot: false #czy rrobot jest holonomiczny
+yaw_goal_tolerance: 0.25 #jaki blad w orientacji jest tolerowany przy osiaganiu pozycji koncowej
+xy_goal_tolerance: 0.25 #jaki blad w pozycji jest tolerowany przy osiaganiu pozycji koncowej
 latch_xy_goal_tolerance: false
-meter_scoring: true
-sim_time: 3
-vx_samples: 3
-vtheta_samples: 20
-heading_lookahead: 3
-pdist_scale: 1
-gdist_scale: 1
+meter_scoring: true #okreslenie czy path_distance i goal_distance sa w metrach
+sim_time: 3 #czas symulacji do przodu wyznaczanych trajektorii
+vx_samples: 3 #liczba uzywanych probek przy liczeniu prędkości liniowych w osi x (odnosi sie do symulowania) 
+vtheta_samples: 20 #liczba uzywanych probek przy liczeniu prędkości katowych (odnosi sie do symulowania) 
+heading_lookahead: 3 #jak daleki obszar brac pod uwage przy ocenianiu roznych trajektorii obrotu w miejscu
+pdist_scale: 1 #wspolczynnik jak bardzo robot ma trzymac sie sciezki
+gdist_scale: 1 #wspolczynnik jak bardzo robot ma starac sie osiagac wyznaczony lokalny cel (kontroluje tez predkosci)
 occdist_scale: 0.05 #jak bardzo robot ma starac sie unikac przeszkody, jak to jest małe (np 0.01 (domyślne)) to robot przejedzie przez np waskie drzwi, a jak duże to nie przejedzie (np 2)
