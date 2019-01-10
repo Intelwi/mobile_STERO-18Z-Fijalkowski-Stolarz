@@ -236,6 +236,7 @@ def manager(data):
 	"""
 	global STATE
 	global working
+	global lefty
 	
 	if(data.z == 0):
 		STATE = 0
@@ -253,17 +254,21 @@ def manager(data):
 		talkerToSlide()
 		working = False
 			
-	elif(data.z == 2):
+	elif(abs(data.z) == 2):
 		if(STATE == 2): return # nie rob tego testu drugi raz z rzedu
 		STATE = 2
+		if(data.z > 0): lefty = True
+		else : lefty = False
 		working = True
 		print "ZACZYNAM TEST ~OBROT~"
 		talkerToTwist()
 		working = False
 		
-	elif(data.z == 3):
+	elif(abs(data.z) == 3):
 		if(STATE == 3): return # nie rob tego testu drugi raz z rzedu
 		STATE = 3
+		if(data.z > 0): lefty = True
+		else : lefty = False
 		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
 		if(working):
 			print "ZACZYNAM TEST ~RUCH PO KWADRACIE v2~"
@@ -297,17 +302,21 @@ def manager(data):
 		talkerToSlideOdom()
 		working = False
 			
-	elif(data.z == 6):
+	elif(abs(data.z) == 6):
 		if(STATE == 6): return # nie rob tego testu drugi raz z rzedu
 		STATE = 6
+		if(data.z > 0): lefty = True
+		else : lefty = False
 		working = True
 		print "ZACZYNAM TEST ~OBROT~ #ODOM"
 		talkerToTwistOdom()
 		working = False
 		
-	elif(data.z == 7):
+	elif(abs(data.z) == 7):
 		if(STATE == 7): return # nie rob tego testu drugi raz z rzedu
 		STATE = 7
+		if(data.z > 0): lefty = True
+		else : lefty = False
 		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
 		if(working):
 			print "ZACZYNAM TEST ~RUCH PO KWADRACIE~ #ODOM"
@@ -318,9 +327,11 @@ def manager(data):
 				talkerToPointOdom()
 			working = False
 			
-	elif(data.z == 8):
+	elif(abs(data.z) == 8):
 		if(STATE == 8): return # nie rob tego testu drugi raz z rzedu
 		STATE = 8
+		if(data.z > 0): lefty = True
+		else : lefty = False
 		calcToPoint(data) # jesli po wykonaniu tej funkcji working==True, tzn ze przyjal te robote
 		if(working):
 			print "ZACZYNAM TEST ~RUCH PO KWADRACIE v2~ #ODOM"

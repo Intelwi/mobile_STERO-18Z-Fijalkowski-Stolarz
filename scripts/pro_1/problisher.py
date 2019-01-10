@@ -83,7 +83,7 @@ if __name__ == '__main__':
 		usage(argNum)
 		sys.exit(1)
 		
-	if mode not in range(9) :
+	if mode not in range(9) and mode not in [-8,-7,-6,-3,-2]:
 		overRange = True
 		print "Non-existent mode request"
 		usage(argNum)
