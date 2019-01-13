@@ -6,7 +6,7 @@ height: 5 #dlugosc mapy
 width: 5 #szerokosc mapy
 update_frequency: 30 #czestotliwosc odswiezania mapy
 publish_frequency: 20 #czestotliwosc publikowania mapy
-always_send_full_costmap: true #wysylanie pelnej mapy kosztow
+always_send_full_costmap: false #wysylanie pelnej mapy kosztow
 origin_x: -2.5 #wspolrzedna x lewego dolnego rogu mapy
 origin_y: -2.5 #wspolrzedna y lewego dolnego rogu mapy
 resolution: 0.05 #rozdzielczosc mapy
@@ -27,7 +27,7 @@ obstacles:
       topic: laser_scan #topic na ktorym nadawane sa dany z skanera laserowego
       marking: true #czy skaner ma byc uzyty do nanoszenia przeszkod na mape
       clearing: true #czy skaner ma byc uzyty do czyszczenia wolnej przestrzeni
-      expected_update_rate: 30
+      expected_update_rate: 0.7
 
 inflation_layer: 
    inflation_radius: 0.31 #promien "nadmuchania" przszkod
