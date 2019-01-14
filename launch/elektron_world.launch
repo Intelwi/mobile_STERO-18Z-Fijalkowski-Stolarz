@@ -1,7 +1,9 @@
 <launch>
 
-<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/feels_like_home.world"/>
+<!--<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/flat1.world"/>-->
+<!--<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/feels_like_home.world"/>-->
 <!--<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/symetrical_corridor.world"/>-->
+<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/elektron_world.world"/>
 <arg name="gui" default="true"/>
 <arg name="base" value="elektron"/> <!-- only elektron -->
 <arg name="laser"    value="$(optenv ELEKTRON_LASER Laser)"/> <!--  Laser, NoLaser   -->

@@ -1,3 +1,7 @@
+x_text = 'n';
+y_text = 'błąd położenia [m]';
+y_text1 = 'błąd orientacji [rad]';
+
 %błąd kwadratu
 bag = rosbag('proj3_tune_square_error.bag');
 
@@ -13,17 +17,17 @@ error = (x_error.^2 + y_error.^2).^(0.5)
 figure(1)
 plot(error)
 xlim([0 length(error)]);
-xlabel('time');
-ylabel('path error');
-title(['Tune test kwadratu'])
+xlabel(x_text);
+ylabel(y_text);
+title(['TuneController test kwadratu'])
 print ('square_path_error', '-dpng', '-r400')
         
 figure(2)   
 hold on;
-title(['Tune test kwadratu'])
+title(['TuneController test kwadratu'])
 plot(theta_error);
-xlabel('time');
-ylabel('angle error');
+xlabel(x_text);
+ylabel(y_text1);
 print ('square_theta_error', '-dpng', '-r400')
 
 %ścieżka
@@ -33,7 +37,7 @@ x = cellfun(@(m) double(m.Pose.Pose.Position.X),msgStructs2);
 y = cellfun(@(m) double(m.Pose.Pose.Position.Y),msgStructs2);
 figure(3)
 plot(x,y)
-title(['Tune test kwadratu']);
+title(['TuneController test kwadratu']);
 xlabel('x');
 ylabel('y');
 print ('square_path', '-dpng', '-r400')
@@ -53,17 +57,17 @@ error = (x_error.^2 + y_error.^2).^(0.5)
 figure(4)
 plot(error)
 xlim([0 length(error)]);
-xlabel('time');
-ylabel('path error');
-title(['Tune ruch w przód i w tył'])
+xlabel(x_text);
+ylabel(y_text);
+title(['TuneController ruch w przód i w tył'])
 print ('slide_path_error', '-dpng', '-r400')
      
 figure(5)   
 hold on;
-title(['Tune ruch w przód i w tył'])
+title(['TuneController ruch w przód i w tył'])
 plot(theta_error);
-xlabel('time');
-ylabel('angle error');
+xlabel(x_text);
+ylabel(y_text1);
 print ('slide_theta_error', '-dpng', '-r400')
 
 
@@ -74,7 +78,7 @@ x = cellfun(@(m) double(m.Pose.Pose.Position.X),msgStructs2);
 y = cellfun(@(m) double(m.Pose.Pose.Position.Y),msgStructs2);
 figure(6)
 plot(x,y)
-title(['Tune ruch w przód i w tył']);
+title(['TuneController ruch w przód i w tył']);
 xlabel('x');
 ylabel('y');
 print ('slide_path', '-dpng', '-r400')
@@ -94,18 +98,18 @@ error = (x_error.^2 + y_error.^2).^(0.5)
 figure(7)
 plot(error)
 xlim([0 length(error)]);
-xlabel('time');
-ylabel('path error');
-title(['Tune obrót'])
+xlabel(x_text);
+ylabel(y_text);
+title(['TuneController obrót'])
 print ('rotate_path_error', '-dpng', '-r400')
   
 
 figure(8)   
 hold on;
-title(['Tune obrót'])
+title(['TuneController obrót'])
 plot(theta_error);
-xlabel('time');
-ylabel('angle error');
+xlabel(x_text);
+ylabel(y_text1);
 print ('rotate_theta_error', '-dpng', '-r400')
 
 
@@ -116,7 +120,7 @@ x = cellfun(@(m) double(m.Pose.Pose.Position.X),msgStructs2);
 y = cellfun(@(m) double(m.Pose.Pose.Position.Y),msgStructs2);
 figure(9)
 plot(x,y)
-title(['Tune obrót']);
+title(['TuneController obrót']);
 xlabel('x');
 ylabel('y');
 print ('rotate_path', '-dpng', '-r400')
