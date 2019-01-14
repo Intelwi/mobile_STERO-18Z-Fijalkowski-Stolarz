@@ -21,7 +21,7 @@ def listener():
 	'/pose2D'
 	
 	"""
-	rospy.init_node('odom_node', anonymous=True)
+	rospy.init_node('laser_node', anonymous=True)
 	rospy.Subscriber('/pose2D', Pose2D, getLaserNav) #do badania laser
 	rospy.Subscriber('/gazebo_odom', Odometry, getGazeboNav)
 	

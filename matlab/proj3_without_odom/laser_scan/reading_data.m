@@ -1,3 +1,7 @@
+x_text = 'n';
+y_text = 'błąd położenia [m]';
+y_text1 = 'błąd orientacji [rad]';
+
 %błąd kwadratu
 bag = rosbag('proj3_laser_square_error.bag');
 
@@ -13,8 +17,8 @@ error = (x_error.^2 + y_error.^2).^(0.5)
 figure(1)
 plot(error)
 xlim([0 length(error)]);
-xlabel('time');
-ylabel('path error');
+xlabel(x_text);
+ylabel(y_text);
 title(['LaserScanMatcher test kwadratu'])
 print ('square_path_error', '-dpng', '-r400')
         
@@ -22,8 +26,8 @@ figure(2)
 hold on;
 title(['LaserScanMatcher test kwadratu'])
 plot(theta_error);
-xlabel('time');
-ylabel('angle error');
+xlabel(x_text);
+ylabel(y_text1);
 print ('square_theta_error', '-dpng', '-r400')
 
 %ścieżka
@@ -53,8 +57,8 @@ error = (x_error.^2 + y_error.^2).^(0.5)
 figure(4)
 plot(error)
 xlim([0 length(error)]);
-xlabel('time');
-ylabel('path error');
+xlabel(x_text);
+ylabel(y_text);
 title(['LaserScanMatcher ruch w przód i w tył'])
 print ('slide_path_error', '-dpng', '-r400')
      
@@ -62,8 +66,8 @@ figure(5)
 hold on;
 title(['LaserScanMatcher ruch w przód i w tył'])
 plot(theta_error);
-xlabel('time');
-ylabel('angle error');
+xlabel(x_text);
+ylabel(y_text1);
 print ('slide_theta_error', '-dpng', '-r400')
 
 
@@ -94,9 +98,9 @@ error = (x_error.^2 + y_error.^2).^(0.5)
 figure(7)
 plot(error)
 xlim([0 length(error)]);
-xlabel('time');
-ylabel('path error');
-title(['Tune ruch w przód i w tył'])
+xlabel(x_text);
+ylabel(y_text);
+title(['LaserScanMatcher obrót'])
 print ('rotate_path_error', '-dpng', '-r400')
   
 
@@ -104,8 +108,8 @@ figure(8)
 hold on;
 title(['LaserScanMatcher obrót'])
 plot(theta_error);
-xlabel('time');
-ylabel('angle error');
+xlabel(x_text);
+ylabel(y_text1);
 print ('rotate_theta_error', '-dpng', '-r400')
 
 
