@@ -13,7 +13,7 @@ PERIOD = 10
 OMEGA = 2*math.pi/PERIOD # pelny obrot na PERIOD sekund
 VELOC = 0.7 # predkosc postepowa 0.1
 HZ = 50 # czestotliwsc wysylania wiadomosci
-STATE = 1 # okresla zadanie jakie wykonuje robot (!=0 -> aktualna pozycja z odometrii/lasera)
+STATE = 0 # okresla zadanie jakie wykonuje robot (!=0 -> aktualna pozycja z odometrii/lasera)
 erBreFa = VELOC*0.06 # early breaking factor
 working = False # True -> robot podczas pracy -> nie zadasz nowego punktu
 withLaser = False # True -> nawigacja z uzyciem lasera
