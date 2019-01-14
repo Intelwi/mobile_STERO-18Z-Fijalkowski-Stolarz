@@ -414,7 +414,7 @@ def talkerToTwistOdom():
 		i=i+1
 		rate.sleep()
 		
-	print "\ntalkerToTwistOdom FINISHED with:"
+	print "\n\ntalkerToTwistOdom FINISHED with:"
 	print "	dest angle: ", format(setRoPo.theta,'.3f'), " current angle: ", format(cuRoPo.theta,'.3f')
 	print "	dest x: ", format(setRoPo.x,'.3f'), "  current x: ", format(cuRoPo.x,'.3f')
 	print "	dest y: ", format(setRoPo.y,'.3f'), "  current y: ", format(cuRoPo.y,'.3f')
