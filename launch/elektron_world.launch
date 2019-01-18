@@ -1,7 +1,8 @@
 <launch>
 
+<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/flat2.world"/>
 <!--<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/flat1.world"/>-->
-<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/feels_like_home.world"/>
+<!--<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/feels_like_home.world"/>-->
 <!--<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/symetrical_corridor.world"/>-->
 <!--<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/corridor_simple.world"/>-->
 <!--<arg name="elektron_world_file"  default="$(find stero_mobile_init)/worlds/non_symetric_corridor.world"/>-->
